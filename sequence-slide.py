@@ -74,8 +74,6 @@ class VRPIntro(Slide):
             tw = tws[i]
             lengths = ([0] + tw + [99])
             l = [(j-i)/100 for i, j in zip(lengths, lengths[1:])]
-            origin_y = dot.get_y() + 10
-            origin_x = dot.get_x()
             before = Rectangle(color=RED, fill_opacity=1, width=l[0], height=height, stroke_width=0)
             during = Rectangle(color=GREEN, fill_opacity=1, width=l[1], height=height, stroke_width=0)
             after = Rectangle(color=RED, fill_opacity=1, width=l[2], height=height, stroke_width=0)
@@ -121,10 +119,78 @@ class VRPIntro(Slide):
         self.pause()
 
         # successor model
+        # remove arrows
+        self.play(AnimationGroup(*[FadeOut(arrow) for arrow in arrows_1 + arrows_2]))
         self.play(FadeIn(text_successor))
+        self.pause()
+        bounding_boxes = [
+            SurroundingRectangle(dots[0], color=BLUE),
+            SurroundingRectangle(dots[1], color=GREEN),
+            SurroundingRectangle(dots[2], color=GREEN),
+            SurroundingRectangle(dots[3], color=GREEN),
+        ]
+        self.play(AnimationGroup(*[Create(box) for box in bounding_boxes], lag_ratio=0.2))
+        self.wait(1)
+        successor_candidates = [
+            DashedArrow(start=dots[0], end=dots[1], dashed_ratio=0.4, dash_length=0.15),
+            DashedArrow(start=dots[0], end=dots[2], dashed_ratio=0.4, dash_length=0.15),
+            DashedArrow(start=dots[0], end=dots[3], dashed_ratio=0.4, dash_length=0.15),
+        ]
+        self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in successor_candidates], lag_ratio=.2))
+        self.pause()
+        self.play(AnimationGroup(*[successor_candidates[1].animate.set_color(RED), successor_candidates[2].animate.set_color(RED)]))
+        self.pause()
+        self.play(AnimationGroup(*([FadeOut(successor_candidates[1]), FadeOut(successor_candidates[2])] + [FadeOut(box) for box in bounding_boxes])))
+        correct_succ = Arrow(dots[0], dots[1])
+        self.play(AnimationGroup(*[FadeIn(correct_succ), correct_succ.animate.set_color(BLUE)]))
+        self.play(FadeOut(successor_candidates[0]))
         self.pause()
         self.wait()
 
+        # drawbacks of the successor model
+        self.play(AnimationGroup(*[FadeOut(text_tsp_to_vrp), FadeOut(correct_succ)]))
+        self.play(text_successor.animate.to_corner(UP + LEFT))
+        blist1 = Tex("1. Prevent insertions heuristics")
+        annex_1 = Tex(r"$\rightarrow$ Some kind of LNS")
+        blist2 = Tex("2. Represent optional visits")
+        annex_2 = Tex(r"$\rightarrow$ Fake vehicle")
+        successor_group = VGroup(text_successor,
+                                 VGroup(blist1, annex_1).arrange(RIGHT),
+                                 VGroup(blist2, annex_2).arrange(RIGHT)
+                                 ).arrange(DOWN, center=False, aligned_edge=LEFT)
+        self.pause()
+        # drawback 1: insertion heuristics
+        self.play(FadeIn(blist1))
+        partial_ordering = [0, 1, 4, 5, 2]
+        partial_route = [Arrow(dots[i], dots[j], color=BLUE) for i, j in zip(partial_ordering, partial_ordering[1:] + [0])]
+        self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in partial_route], lag_ratio=.2))
+        self.pause()
+        self.play(FadeOut(partial_route[3]))
+        partial_route.remove(partial_route[3])
+        detour = [Arrow(dots[5], dots[8], color=BLUE), Arrow(dots[8], dots[2], color=BLUE)]
+        self.play(AnimationGroup(*[GrowArrow(detour[0]), GrowArrow(detour[1])], lag_ratio=.2))
+        self.play(FadeIn(annex_1))
+        self.pause()
+        # drawback 2: exclusion
+        self.play(AnimationGroup(*[FadeOut(arrow) for arrow in partial_route + detour]))
+        optional = [8, 6, 7, 3]
+        self.play(AnimationGroup(*[dots[i].animate.set_color(ORANGE) for i in optional]))
+        self.play(FadeIn(blist2))
+        center = (sum(dots[i].get_x() for i in optional) / len(optional), sum(dots[i].get_y() for i in optional) / len(optional), 0)
+        question_mark = Text("?", color=ORANGE).move_to(center)
+        self.play(Write(question_mark))
+        self.pause()
+        visited = [0, 1, 4, 5, 8, 2]
+        excluded = [6, 7, 3]
+        visited_arrows = [Arrow(dots[i], dots[j], color=BLUE) for i, j in zip(visited, visited[1:] + [0])]
+        excluded_arrows = [Arrow(dots[i], dots[j], color=RED) for i, j in zip(excluded, excluded[1:] + [excluded[0]])]
+        self.play(FadeOut(question_mark))
+        self.play(AnimationGroup(*([dots[i].animate.set_color(RED) for i in excluded] + [dots[i].animate.set_color(WHITE) for i in optional if i not in excluded])))
+        self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in visited_arrows], lag_ratio=.2))
+        self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in excluded_arrows], lag_ratio=.2))
+        self.play(FadeIn(annex_2))
+        self.pause()
+        self.wait()
 
 
 class SequenceOtherWork(Slide):
