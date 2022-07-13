@@ -144,10 +144,11 @@ class VRPIntro(Slide):
             DashedArrow(start=dots[0], end=dots[3], dashed_ratio=0.4, dash_length=0.15),
         ]
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in successor_candidates], lag_ratio=.2))
+        self.play(AnimationGroup(*[FadeOut(box) for box in bounding_boxes], lag_ratio=0.2))
         self.pause()
         self.play(AnimationGroup(*[successor_candidates[1].animate.set_color(RED), successor_candidates[2].animate.set_color(RED)]))
         self.pause()
-        self.play(AnimationGroup(*([FadeOut(successor_candidates[1]), FadeOut(successor_candidates[2])] + [FadeOut(box) for box in bounding_boxes])))
+        self.play(AnimationGroup(*([FadeOut(successor_candidates[1]), FadeOut(successor_candidates[2])])))
         correct_succ = Arrow(dots[0], dots[1])
         self.play(AnimationGroup(*[FadeIn(correct_succ), correct_succ.animate.set_color(BLUE)]))
         self.play(FadeOut(successor_candidates[0]))
@@ -300,13 +301,23 @@ class SequenceOtherWork(Slide):
 class Sequences(Slide):
 
     def construct(self):
+        text_sequence = Text("Sequence Variable", color=BLUE).to_corner(UP + LEFT)
+        insert_table = MathTable(
+            [["Partial Sequence", "Operation"],
+            [r"\alpha \rightarrow \omega", "Initialization"],
+            [r"\alpha \rightarrow 1 \rightarrow \omega", r"Insert(\alpha, 1)"],
+            [r"\alpha \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(1, 4)"],
+            [r"\alpha \rightarrow 5 \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(\alpha, 5)"]
+            ],
+            include_outer_lines=True).next_to(text_sequence, DOWN).set_x(ORIGIN[0])
 
         # coordinates for the dots
         coords = [
-            np.array([-4.25, 0.75, 0]),
+            np.array([-4.25, 0.75, 0]),   # alpha
             np.array([-1.75, 2.75, 0]),
             np.array([-1.25, 1.25, 0]),
-            np.array([-1, -0.5, 0]),  # last member
+            np.array([-1, -0.5, 0]),
+            np.array([-4, -1.5, 0]),  # last member
             np.array([2, 2.5, 0]),
             np.array([1.75, 1, 0]),
             np.array([3.25, -0.75, 0]),  # last possible
@@ -315,52 +326,148 @@ class Sequences(Slide):
         ]
         # draw the dots
         dots = [Dot(i, radius=0.16) for i in coords]
-        self.play(*[FadeIn(dot) for dot in dots])
-        self.pause()
         # partition of the nodes
-        members = [0, 1, 2, 3]
-        possible = [4, 5, 6]
+        members = [0, 1, 2, 3, 4]
+        possible = [5, 6, 7]
         insertions = {
-            4: [1, 2, 3],
-            5: [1, 2, 3, 4],
-            6: [1, 2, 3, 4, 5],
+            5: [1, 2, 3],
+            6: [1, 2, 3, 5],
+            7: [1, 2, 3, 5, 6],
         }
-        excluded = [7, 8]
+        excluded = [8, 9]
 
         members_group = VGroup(*[dots[i] for i in members])
         excluded_group = VGroup(*[dots[i] for i in excluded])
         possible_group = VGroup(*[dots[i] for i in possible])
-        # nodes that will be set as members
-        self.play(members_group.animate.set_color(MEMBER))
-        self.pause()
+        text_first = Tex(r"$\alpha$", color=MEMBER).next_to(dots[0], LEFT)
+        text_last = Tex(r"$\omega$", color=MEMBER).next_to(dots[4], LEFT)
+        text_member = Text("members", color=MEMBER).scale(0.5)
+        text_possible = Text("possible", color=POSSIBLE).scale(0.5)
+        text_excluded = Text("excluded", color=EXCLUDED).scale(0.5)
+        all_dots = VGroup(*dots).next_to(text_sequence, DOWN, buff=.5).set_x(ORIGIN[0])
+        description_group = VGroup(text_member, text_possible, text_excluded).arrange(RIGHT, buff=1).next_to(all_dots, DOWN)
 
         # ordering for the members
         successors = [Arrow(i.get_center(), j.get_center(), color=MEMBER) for i, j in zip(members_group, members_group[1:])]
         # successors_group = VGroup(*successors)
         animations = [GrowArrow(succ) for succ in successors]
-        self.play(AnimationGroup(*animations, lag_ratio=0.25))
-        self.pause()
 
-
-        # excluded nodes
-        self.play(excluded_group.animate.set_color(EXCLUDED))
-        self.pause()
-
-        # possible nodes
-        self.play(possible_group.animate.set_color(POSSIBLE))
-        self.pause()
         # predecessors for the nodes
         insertions_arrows = {
             node:
-                [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4, dash_length=0.15, color=POSSIBLE) for pred in v]
+                [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4, dash_length=0.15, color=FOREGROUND) for pred in v]
             for node, v in insertions.items()
         }
         # make the arrows grow
         arrows_list = [arrow for k, v in insertions_arrows.items() for arrow in v]
         random.shuffle(arrows_list)
-        animations_list = [GrowArrow(arrow) for arrow in arrows_list]
-        self.play(AnimationGroup(*animations_list, lag_ratio=0.2))
+        grow_insertions = [GrowArrow(arrow) for arrow in arrows_list]
 
+        # initial title, table of operations
+        self.play(FadeIn(text_sequence))
+        self.play(Create(insert_table))
+        self.wait()
+        self.pause()
+        self.play(FadeOut(insert_table))
+        # and the dots appear
+        self.play(*[FadeIn(dot) for dot in dots])
+        self.pause()
+        # nodes that will be set as members
+        self.play(members_group.animate.set_color(MEMBER))
+        self.play(AnimationGroup(*[FadeIn(text_first), FadeIn(text_last), FadeIn(text_member)]))
+        self.pause()
+        self.play(AnimationGroup(*animations, lag_ratio=0.25))
+        self.pause()
+        # excluded nodes
+        self.play(excluded_group.animate.set_color(EXCLUDED))
+        self.play(FadeIn(text_excluded))
+        self.pause()
+        # possible nodes
+        self.play(possible_group.animate.set_color(POSSIBLE))
+        self.play(FadeIn(text_possible))
+        self.pause()
+        # show the insertions
+        self.play(AnimationGroup(*grow_insertions, lag_ratio=0.2))
+        self.pause()
+        # show an exclusion of a possible node (node 5)
+        n = 5
+        self.play(Indicate(dots[n], color=EXCLUDED))
+        self.wait()
+        arrows_changed = [insertions_arrows[node][i] for node, v in insertions.items() for i, pred in enumerate(v) if pred == n or node == n]
+        self.play(dots[n].animate.set_color(EXCLUDED))
+        self.play(AnimationGroup(*([FadeOut(arrow) for arrow in arrows_changed])))
+        self.pause()
+        # revert to previous state
+        self.play(AnimationGroup(*([FadeIn(arrow) for arrow in arrows_changed])))
+        self.play(dots[n].animate.set_color(POSSIBLE))
+        self.pause()
+        # show the insertion of a possible node (node 5 after node 1)
+        p = 1
+        arrows_changed = [insertions_arrows[n][i] for i, pred in enumerate(insertions[n]) if pred != p]
+        arrow_selected = [arrow for arrow in insertions_arrows[n] if arrow not in arrows_changed][0]
+        arrow_detour_added = Arrow(start=dots[n], end=dots[2], color=MEMBER)
+        arrow_detour_removed = successors[1]
+        self.play(Indicate(dots[n], color=MEMBER))
+        self.wait()
+        self.play(dots[n].animate.set_color(MEMBER))
+        self.play(AnimationGroup(*[FadeOut(arrow) for arrow in arrows_changed]))
+        # change the arrow for the insertion
+        arrow_selected.save_state()
+        arrow_detour_removed.save_state()
+        self.play(AnimationGroup(*[
+            Transform(arrow_selected, Arrow(start=dots[p], end=dots[n], color=MEMBER)),
+            FadeOut(arrow_detour_removed),
+            GrowArrow(arrow_detour_added)
+        ]))
+        self.pause()
+        # undo the insertion
+        #self.play(AnimationGroup(*[Restore(arrow_selected), Restore(arrow_detour_removed), FadeOut(arrow_detour_added), dots[n].animate.set_color(POSSIBLE)]))
+        #self.pause()
+        self.wait()
+
+
+class DomainConsistency(Slide):
+
+    def construct(self):
+        # domain consistency
+        title = Text("Consistency of the domain", color=BLUE).to_corner(UP + LEFT)
+
+        math_tri_partition = MathTex(r"\bullet\hspace{5pt} S \cup P \cup E = X \wedge S \cap P = S \cap E =  P \cap E = \phi")
+        text_tri_partition = MarkupText("Members (S), Possible (P), Excluded (E) nodes form a tri-partition").scale(.5)
+        tri_partition = VGroup(math_tri_partition, text_tri_partition).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        math_excluded_not_pred = MathTex(r"\bullet \hspace{5pt} p \in E \implies I^p = \phi \wedge \forall x: p \notin I^x")
+        text_excluded_not_pred = MarkupText("An excluded element cannot be inserted nor be a predecessor").scale(.5)
+        excluded_not_pred = VGroup(math_excluded_not_pred, text_excluded_not_pred).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        math_member_not_insert = MathTex(r"\bullet \hspace{5pt} p \in S \implies I^p = \phi")
+        text_member_not_insert = MarkupText("An element in the sequence cannot be inserted (again)").scale(.5)
+        member_not_insert = VGroup(math_member_not_insert, text_member_not_insert).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        math_no_pred = MathTex(r"\bullet \hspace{5pt} I^p = \phi \implies p \in S \vee p \in E")
+        text_no_pred = MarkupText("An element without possible predecessor is either excluded or in the sequence").scale(.5)
+        no_pred = VGroup(math_no_pred, text_no_pred).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        layout = VGroup(title, tri_partition, excluded_not_pred, member_not_insert, no_pred)\
+            .arrange(DOWN, center=False, aligned_edge=LEFT, buff=.5).to_corner(UP + LEFT)
+
+        text_tri_partition.align_to(LEFT).shift(np.array([1, 0, 0]))
+        text_excluded_not_pred.align_to(LEFT).shift(np.array([1, 0, 0]))
+        text_member_not_insert.align_to(LEFT).shift(np.array([1, 0, 0]))
+        text_no_pred.align_to(LEFT).shift(np.array([1, 0, 0]))
+        self.play(FadeIn(title))
+        self.pause()
+        self.play(FadeIn(math_tri_partition))
+        self.play(FadeIn(text_tri_partition))
+        self.pause()
+        self.play(FadeIn(math_excluded_not_pred))
+        self.play(FadeIn(text_excluded_not_pred))
+        self.pause()
+        self.play(FadeIn(math_member_not_insert))
+        self.play(FadeIn(text_member_not_insert))
+        self.pause()
+        self.play(FadeIn(math_no_pred))
+        self.play(FadeIn(text_no_pred))
         self.pause()
         self.wait()
 
