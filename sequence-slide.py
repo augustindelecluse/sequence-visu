@@ -1,3 +1,4 @@
+import numpy as np
 from manim import *
 from manim_presentation import Slide
 import random
@@ -5,6 +6,8 @@ import random
 MEMBER = GREEN
 POSSIBLE = BLUE
 EXCLUDED = RED
+BACKGROUND = BLACK
+FOREGROUND = WHITE
 
 
 class DashedArrow(Arrow, DashedLine):
@@ -33,7 +36,7 @@ class VRPIntro(Slide):
         ]
         dots = [Dot(i) for i in coords]
         dot_group = VGroup(*dots)
-        VGroup(text_group, dot_group).arrange(DOWN)
+        VGroup(text_group, dot_group).arrange(DOWN, buff=.5)
         self.play(FadeIn(text_tsp_to_vrp))
         self.pause()
         self.play(*[FadeIn(dot) for dot in dots])
@@ -45,6 +48,11 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*arrows_animations, lag_ratio=.2))
         self.pause()
         # remove the path and add new path for 2 vehicles
+        # transform node 0 to become a depot
+        depot = Square(side_length=dots[0].radius * 1.5).rotate(PI/4).set_fill(FOREGROUND, opacity=1.0).move_to(dots[0].get_center())
+        self.play(Transform(dots[0], depot))
+        text_depot = Text("Depot").scale(.7).next_to(depot, LEFT)
+        self.play(FadeIn(text_depot))
         ordering_1 = [0, 1, 4, 5, 2]
         ordering_2 = [0, 3, 7, 6, 8]
         self.play(AnimationGroup(*[FadeOut(arrow) for arrow in arrows]))
@@ -114,8 +122,7 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*[FadeIn(img) for img in pickup_img + drop_img]))
 
         self.pause()
-        self.play(AnimationGroup(*[FadeOut(img) for img in pickup_img + drop_img]))
-        self.play(AnimationGroup(*[FadeIn(dot) for dot in dots[1:]]))
+        self.play(AnimationGroup(*([FadeOut(img) for img in pickup_img + drop_img] + [FadeIn(dot) for dot in dots[1:]] + [FadeOut(text_depot)])))
         self.pause()
 
         # successor model
@@ -159,6 +166,7 @@ class VRPIntro(Slide):
                                  VGroup(blist2, annex_2).arrange(RIGHT)
                                  ).arrange(DOWN, center=False, aligned_edge=LEFT)
         self.pause()
+
         # drawback 1: insertion heuristics
         self.play(FadeIn(blist1))
         partial_ordering = [0, 1, 4, 5, 2]
@@ -171,10 +179,14 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*[GrowArrow(detour[0]), GrowArrow(detour[1])], lag_ratio=.2))
         self.play(FadeIn(annex_1))
         self.pause()
-        # drawback 2: exclusion
+
+        # drawback 2: optional nodes
         self.play(AnimationGroup(*[FadeOut(arrow) for arrow in partial_route + detour]))
         optional = [8, 6, 7, 3]
-        self.play(AnimationGroup(*[dots[i].animate.set_color(ORANGE) for i in optional]))
+        optional_circles = [Circle(radius=dots[0].radius, color=ORANGE).move_to(dots[i].get_center()) for i in optional]
+        # transform optional nodes into circles
+        #self.play(AnimationGroup(*[dots[i].animate.set_color(ORANGE) for i in optional]))
+        self.play(AnimationGroup(*[Transform(dots[i], optional_circles[j]) for j, i in enumerate(optional)]))
         self.play(FadeIn(blist2))
         center = (sum(dots[i].get_x() for i in optional) / len(optional), sum(dots[i].get_y() for i in optional) / len(optional), 0)
         question_mark = Text("?", color=ORANGE).move_to(center)
@@ -185,7 +197,9 @@ class VRPIntro(Slide):
         visited_arrows = [Arrow(dots[i], dots[j], color=BLUE) for i, j in zip(visited, visited[1:] + [0])]
         excluded_arrows = [Arrow(dots[i], dots[j], color=RED) for i, j in zip(excluded, excluded[1:] + [excluded[0]])]
         self.play(FadeOut(question_mark))
-        self.play(AnimationGroup(*([dots[i].animate.set_color(RED) for i in excluded] + [dots[i].animate.set_color(WHITE) for i in optional if i not in excluded])))
+        #self.play(FadeOut(optional_circles[0]))
+        self.play(Transform(dots[8], Dot(dots[8].get_center())))
+        #self.play(AnimationGroup(*([dots[i].animate.set_color(RED) for i in excluded] + [dots[i].animate.set_color(FOREGROUND) for i in optional if i not in excluded])))
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in visited_arrows], lag_ratio=.2))
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in excluded_arrows], lag_ratio=.2))
         self.play(FadeIn(annex_2))
@@ -196,10 +210,91 @@ class VRPIntro(Slide):
 class SequenceOtherWork(Slide):
 
     def construct(self):
-        # mention insertion graph and partial order scheduling
+        text_interval = Text("Interval Sequence Variables", color=BLUE)
+        text_scale = .7
+        text_cplex = Tex(r"$\vartriangleright$ Available in CP Optimizer ", "(CPLEX) ", "and ", "Google OR-Tools").scale(text_scale).set_color_by_tex('CPLEX', BLUE).set_color_by_tex('Google', BLUE)
+        #text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables", "space", "ordered through a ", "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE).set_color_by_tex("space", BACKGROUND)
+        #text_sequence = Tex().scale(text_scale).set_color_by_tex('Sequence', BLUE)
+        #group_nodes_description = VGroup(text_nodes_representation, text_sequence).arrange(DOWN, center=False, aligned_edge=RIGHT)
+        text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables ", "ordered through a ", "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE)
+        group_nodes_description = VGroup(text_nodes_representation).arrange(DOWN, center=False, aligned_edge=RIGHT)
+        text_head_tail = Tex(r"$\vartriangleright$ Head-tail structure").scale(text_scale)
+        text_group = VGroup(text_interval, text_cplex, group_nodes_description, text_head_tail).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(UP + LEFT)
+        coords = [
+            np.array([0, 0, 0]),  # head
+            np.array([0.5, 0, 0]),
+            np.array([1, 0, 0]),  # last head
 
-        # mention cplex
-        pass
+            np.array([2, 1, 0]),
+            np.array([2.5, -0.25, 0]),
+            np.array([3, .75, 0]),
+            np.array([3.25, 0.25, 0]),
+            np.array([3.75, 0.8, 0]),
+            np.array([4.1, -0.1, 0]),
+            np.array([4.5, 0.6, 0]),
+            np.array([5, -0.2, 0]),
+            np.array([5.25, 0.6, 0]),
+            np.array([5.5, -.5, 0]),
+
+            np.array([6.5, 0, 0]),  # last tail
+            np.array([7, 0, 0]),
+            np.array([7.5, 0, 0]),
+            np.array([8, 0, 0]),  # tail
+        ]
+        circle_list = [0, 1, 4, 6, 7, 10, 11, 12, 14]
+        dot_list = [i for i in range(len(coords)) if i not in circle_list]
+        dots = [Dot(coords[i]) for i in circle_list]
+        circles = [Circle(radius=dots[0].radius, color=FOREGROUND).move_to(coords[i]) for i in dot_list]
+        points_list = dots + circles
+        y_coord = -1
+        limit_length = 2.25
+        head_color = BLUE
+        head_cand_color = BLUE
+        tail_color = GREEN
+        tail_cand_color = GREEN
+        head_start = [0, y_coord, 0]
+        head_end = [1.25, y_coord, 0]
+        arrow_head = Arrow(start=head_start, end=head_end, max_tip_length_to_length_ratio=.1, buff=0, color=head_color)
+        head_limit = DashedLine(start=head_end, end=head_end + np.array([0, limit_length, 0]), color=head_color)
+        tail_start = [8, y_coord, 0]
+        tail_end = [6.25, y_coord, 0]
+        arrow_tail = Arrow(start=tail_start, end=tail_end, max_tip_length_to_length_ratio=.1, buff=0, color=tail_color)
+        tail_limit = DashedLine(start=tail_end, end=tail_end + np.array([0, limit_length, 0]), color=tail_color)
+        text_head = MarkupText("Head", color=head_color).scale(.5).next_to(arrow_head, DOWN)
+        text_tail = MarkupText("Tail", color=tail_color).scale(.5).next_to(arrow_tail, DOWN)
+        text_not_sequenced = MarkupText("Not Sequenced").scale(.5).set_y(text_tail.get_y()).set_x(3.75)
+        candidates_head = Ellipse(height=3, width=2, color=head_cand_color).rotate(-PI/4).move_to(np.array([3.5, 0.25, 0]))  # head candidates
+        candidates_tail = Ellipse(height=2.5, width=2, color=tail_cand_color).rotate(3*PI/8).move_to(np.array([4, 0.25, 0]))  # tail candidates
+        text_candidates_head = MarkupText("Candidates Head", color=head_cand_color).scale(.5).move_to(np.array([2.2, 1.75, 0]))
+        text_candidates_tail = MarkupText("Candidates Tail", color=tail_cand_color).scale(.5).move_to(np.array([5.3, 1.75, 0]))
+
+        figure_list = points_list + \
+                      [arrow_head, text_head, head_limit] + \
+                      [arrow_tail, text_tail, tail_limit] + \
+                      [candidates_head, text_candidates_head] + \
+                      [candidates_tail, text_candidates_tail] + \
+                      [text_not_sequenced]
+        figures = VGroup(*figure_list).next_to(text_group, DOWN, buff=0.5).set_x(ORIGIN[0])
+        text_pros_cons = MarkupText(f"<span fgcolor='{GREEN}'>OK</span> optional visits\n<span fgcolor='{RED}'>KO</span> cannot insert anywhere in the sequence").scale(.5)
+        text_pros_cons.next_to(figures, DOWN).to_corner(LEFT)
+
+        self.play(FadeIn(text_group))
+        self.pause()
+
+        self.play(AnimationGroup(*([FadeIn(c) for c in circles+dots])))
+        self.pause()
+        self.play(AnimationGroup(*[GrowArrow(arrow_head), FadeIn(text_head), GrowFromPoint(head_limit, arrow_head.get_end())], lag_ratio=.3))
+        self.play(AnimationGroup(*[GrowArrow(arrow_tail), FadeIn(text_tail), GrowFromPoint(tail_limit, arrow_tail.get_end())], lag_ratio=.3))
+        self.play(FadeIn(text_not_sequenced))
+        self.pause()
+        self.play(Create(candidates_head))
+        self.play(FadeIn(text_candidates_head))
+        self.play(Create(candidates_tail))
+        self.play(FadeIn(text_candidates_tail))
+        self.pause()
+        self.play(FadeIn(text_pros_cons))
+        self.pause()
+        self.wait()
 
 
 class Sequences(Slide):
