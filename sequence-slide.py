@@ -301,7 +301,9 @@ class SequenceOtherWork(Slide):
 class Sequences(Slide):
 
     def construct(self):
-        text_sequence = Text("Sequence Variable", color=BLUE).to_corner(UP + LEFT)
+        text_sequence = Text("Sequence Variable", color=BLUE)
+        text_data_structure = Text("data structures", color=BLUE)
+        title_group = VGroup(text_sequence, text_data_structure).arrange(RIGHT).to_corner(UP + LEFT)
         insert_table = MathTable(
             [["Partial Sequence", "Operation"],
             [r"\alpha \rightarrow \omega", "Initialization"],
@@ -322,7 +324,7 @@ class Sequences(Slide):
             np.array([1.75, 1, 0]),
             np.array([3.25, -0.75, 0]),  # last possible
             np.array([2.5, -2, 0]),
-            np.array([4.75, 1, 0]),
+            np.array([3.5, 1.5, 0]),
         ]
         # draw the dots
         dots = [Dot(i, radius=0.16) for i in coords]
@@ -332,7 +334,7 @@ class Sequences(Slide):
         insertions = {
             5: [1, 2, 3],
             6: [1, 2, 3, 5],
-            7: [1, 2, 3, 5, 6],
+            7: [2, 3, 5, 6],
         }
         excluded = [8, 9]
 
@@ -341,9 +343,9 @@ class Sequences(Slide):
         possible_group = VGroup(*[dots[i] for i in possible])
         text_first = Tex(r"$\alpha$", color=MEMBER).next_to(dots[0], LEFT)
         text_last = Tex(r"$\omega$", color=MEMBER).next_to(dots[4], LEFT)
-        text_member = Text("members", color=MEMBER).scale(0.5)
-        text_possible = Text("possible", color=POSSIBLE).scale(0.5)
-        text_excluded = Text("excluded", color=EXCLUDED).scale(0.5)
+        text_member = Text("members (S)", color=MEMBER).scale(0.5)
+        text_possible = Text("possible (P)", color=POSSIBLE).scale(0.5)
+        text_excluded = Text("excluded (E)", color=EXCLUDED).scale(0.5)
         all_dots = VGroup(*dots).next_to(text_sequence, DOWN, buff=.5).set_x(ORIGIN[0])
         description_group = VGroup(text_member, text_possible, text_excluded).arrange(RIGHT, buff=1).next_to(all_dots, DOWN)
 
@@ -421,9 +423,162 @@ class Sequences(Slide):
         ]))
         self.pause()
         # undo the insertion
-        #self.play(AnimationGroup(*[Restore(arrow_selected), Restore(arrow_detour_removed), FadeOut(arrow_detour_added), dots[n].animate.set_color(POSSIBLE)]))
-        #self.pause()
+        self.play(AnimationGroup(*[Restore(arrow_selected), Restore(arrow_detour_removed), FadeOut(arrow_detour_added), dots[n].animate.set_color(POSSIBLE)]))
+        self.pause()
         self.wait()
+
+        # present the data structures
+        # unzoom the sequence to make place for the data structures
+        nodes_labels = [
+            text_first,
+            Tex(r"$a$", color=MEMBER).next_to(dots[1], LEFT),
+            Tex(r"$b$", color=MEMBER).next_to(dots[2], LEFT),
+            Tex(r"$c$", color=MEMBER).next_to(dots[3], LEFT),
+            text_last,
+            Tex(r"$d$", color=POSSIBLE).next_to(dots[5], RIGHT),
+            Tex(r"$e$", color=POSSIBLE).next_to(dots[6], RIGHT),
+            Tex(r"$f$", color=POSSIBLE).next_to(dots[7], RIGHT),
+            Tex(r"$g$", color=EXCLUDED).next_to(dots[8], RIGHT),
+            Tex(r"$h$", color=EXCLUDED).next_to(dots[9], RIGHT),
+        ]
+        labels_group = VGroup(*nodes_labels)
+        full_schema = VGroup(all_dots, *[arrow for n, v in insertions_arrows.items() for arrow in v],
+                             description_group, *successors, labels_group)
+        self.play(ScaleInPlace(full_schema, 0.8))
+        self.play(AnimationGroup(*[full_schema.animate.to_corner(LEFT), FadeIn(text_data_structure)]))
+        self.pause()
+        #self.play(AnimationGroup(*[FadeIn(label) for label in nodes_labels if label not in [text_first, text_last]]))
+        # table of insertions
+        text_node = Tex("node $x$")
+        text_insert = Tex("$I^x$")
+        text_nsx = Tex("$n_s^x$")
+        text_npx = Tex("$n_p^x$")
+        header_buff = 0.4
+        table_header_tiny = VGroup(text_node, text_insert).arrange(RIGHT, buff=header_buff)
+        table_header_full = VGroup(table_header_tiny, text_nsx, text_npx).arrange(RIGHT, buff=header_buff)
+        table_label = [
+            Tex("$a$", color=MEMBER),
+            Tex("$b$", color=MEMBER),
+            Tex("$c$", color=MEMBER),
+            Tex("$d$", color=POSSIBLE),
+            Tex("$e$", color=POSSIBLE),
+            Tex("$f$", color=POSSIBLE),
+            Tex("$g$", color=EXCLUDED),
+            Tex("$h$", color=EXCLUDED),
+        ]
+        table_insertions = [
+            Tex("$\emptyset$", color=MEMBER),
+            Tex("$\emptyset$", color=MEMBER),
+            Tex("$\emptyset$", color=MEMBER),
+            Tex("$\{a, b, c\}$", color=POSSIBLE),
+            Tex("$\{a, b, c, d\}$", color=POSSIBLE),
+            Tex("$\{b, c, d, e\}$", color=POSSIBLE),
+            Tex("$\emptyset$", color=EXCLUDED),
+            Tex("$\emptyset$", color=EXCLUDED),
+        ]
+        table_nsx = [
+            Tex("0", color=MEMBER),
+            Tex("0", color=MEMBER),
+            Tex("0", color=MEMBER),
+            Tex("3", color=POSSIBLE),
+            Tex("3", color=POSSIBLE),
+            Tex("2", color=POSSIBLE),
+            Tex("0", color=EXCLUDED),
+            Tex("0", color=EXCLUDED),
+        ]
+        table_npx = [
+            Tex("0", color=MEMBER),
+            Tex("0", color=MEMBER),
+            Tex("0", color=MEMBER),
+            Tex("0", color=POSSIBLE),
+            Tex("1", color=POSSIBLE),
+            Tex("2", color=POSSIBLE),
+            Tex("0", color=EXCLUDED),
+            Tex("0", color=EXCLUDED),
+        ]
+        entries = [
+            VGroup(table_label[i], table_insertions[i], table_nsx[i], table_npx[i]).arrange(RIGHT) for i in range(len(table_label))
+        ]
+        entries_layout = VGroup(*entries).arrange(DOWN).next_to(table_header_full, DOWN)
+        #label_layout = VGroup(*table_label).arrange(DOWN).next_to(text_node, DOWN)
+        #insertions_layout = VGroup(*table_insertions).arrange(DOWN).next_to(text_insert, DOWN)
+        #nsx_layout = VGroup(*table_nsx).arrange(DOWN).next_to(text_nsx, DOWN)
+        #npx_layout = VGroup(*table_npx).arrange(DOWN).next_to(text_npx, DOWN)
+        full_table = VGroup(table_header_full, entries_layout).next_to(full_schema, RIGHT, buff=0.4)
+
+        table_shift = np.array([8, -1, 0])
+        header_line_tiny = Line(text_node.get_left(), text_insert.get_right()).next_to(table_header_tiny, DOWN)
+        t0 = MobjectTable([
+            [text_node.copy(), text_insert.copy()],
+            *[[table_label[i].copy(), table_insertions[i].copy()] for i in range(3)]
+        ], v_buff=0.1, h_buff=0.2).to_corner(UP + LEFT).shift(table_shift)
+        t0.remove(*[o for i, o in enumerate(t0.get_vertical_lines()) if i != 0])
+        t0.remove(*[o for i, o in enumerate(t0.get_horizontal_lines()) if i != 0])
+        t1, t2 = [MobjectTable([
+            [text_node.copy(), text_insert.copy(), text_nsx.copy(), text_npx.copy()],
+            *[[table_label[i].copy(), table_insertions[i].copy(), table_nsx[i].copy(), table_npx[i].copy()] for i in range(j)]
+        ], v_buff=0.1, h_buff=0.2).to_corner(UP + LEFT).shift(table_shift) for j in [6, len(table_npx)]]
+        for t in t1, t2:
+            t.remove(*[o for i, o in enumerate(t.get_vertical_lines()) if i != 0])
+            t.remove(*[o for i, o in enumerate(t.get_horizontal_lines()) if i != 0])\
+        #self.play(AnimationGroup(*[FadeIn(text_node), FadeIn(text_insert), GrowFromPoint(header_line_tiny, header_line_tiny.get_start())]))
+        self.play(Create(t0))
+        self.wait()
+        self.pause()
+        self.play(Transform(t0, t1))
+        self.wait()
+        self.pause()
+        # show insertions for node 6
+        surrounding_rectangle_node_6 = SurroundingRectangle(dots[6], color=POSSIBLE, buff=0)
+        self.play(Create(surrounding_rectangle_node_6))
+        # show member insertions
+        self.play(AnimationGroup(
+            *[Indicate(insertions_arrows[6][j], color=MEMBER, run_time=2) for j, pred in enumerate(insertions[6]) if pred in members]))
+        surrounding_rectangle_1 = SurroundingRectangle(t2.get_cell((6, 3)), color=MEMBER, buff=0)
+        self.play(Create(surrounding_rectangle_1))
+        self.wait()
+        self.pause()
+        self.play(FadeOut(surrounding_rectangle_1))
+
+        # show possible insertions
+        self.play(AnimationGroup(
+            *[Indicate(insertions_arrows[6][j], color=POSSIBLE) for j, pred in enumerate(insertions[6]) if pred in possible]))
+        surrounding_rectangle_2 = SurroundingRectangle(t2.get_cell((6, 4)), color=POSSIBLE)
+        self.play(Create(surrounding_rectangle_2))
+        self.wait()
+        self.pause()
+        self.play(AnimationGroup(*[Uncreate(surrounding_rectangle_node_6), FadeOut(surrounding_rectangle_2)]))
+        self.play(FadeIn(t2))
+        self.play(FadeOut(t1))
+        self.pause()
+
+        for i, (item, description) in enumerate([(t2.get_columns()[1], "sparse sets"),
+                                                 (t2.get_columns()[2:4], "reversible\nintegers")]):
+            highlight = SurroundingRectangle(item)
+            text_description = Text(description, color=highlight.color).scale(0.5).next_to(highlight, DOWN)
+            self.play(Create(highlight, lag_ratio=2))
+            self.play(FadeIn(text_description))
+            self.wait()
+            self.pause()
+            self.play(AnimationGroup(*[Uncreate(highlight), FadeOut(text_description)]))
+            self.wait()
+            self.pause()
+
+
+        self.wait()
+        # show successor array
+        succ_array = MathTable([["succ", "b", "c", r"\omega", "d", "e", "f", "g", "h", "a", r"\alpha"],
+                                ["node"] + [c for c in "abcdefgh"] + [r"\alpha", r"\omega"]],
+                               h_buff=0.2, v_buff=0.1, include_outer_lines=False).next_to(t2, DOWN)
+        for node in [0, 1, 2, 8, 9]:
+            succ_array.add_highlighted_cell((1, node+2), color=MEMBER)
+            succ_array.add_highlighted_cell((2, node+2), color=MEMBER)
+        self.play(Create(succ_array))
+        self.wait()
+        self.pause()
+        self.wait()
+
+
 
 
 class DomainConsistency(Slide):
