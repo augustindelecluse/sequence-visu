@@ -16,15 +16,18 @@ class DashedArrow(Arrow, DashedLine):
         super().__init__(*args, **kwargs)
 
 
-class VRPIntro(Slide):
+class Presentation(Slide):
 
     def construct(self):
+
+        # ==============================
+        # SLIDE VRPIntro
+        # ==============================
+
         # introduction
-        text_tsp_to_vrp = MarkupText(
-            f"From <span fgcolor='{BLUE}'>TSP</span>\nto Vehicle Routing Problems (<span fgcolor='{BLUE}'>VRP</span>)")
+        text_tsp_to_vrp = MarkupText(f"From <span fgcolor='{BLUE}'>TSP</span>\nto Vehicle Routing Problems (<span fgcolor='{BLUE}'>VRP</span>)")
         text_successor = MarkupText("Successor model", color=BLUE)
-        text_group = VGroup(text_tsp_to_vrp, text_successor).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(
-            UP + LEFT)
+        text_group = VGroup(text_tsp_to_vrp, text_successor).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(UP + LEFT)
         coords = [
             np.array([-4.25, 0.75, 0]),
             np.array([-1.75, 2.75, 0]),
@@ -51,8 +54,7 @@ class VRPIntro(Slide):
         self.pause()
         # remove the path and add new path for 2 vehicles
         # transform node 0 to become a depot
-        depot = Square(side_length=dots[0].radius * 1.5).rotate(PI / 4).set_fill(FOREGROUND, opacity=1.0).move_to(
-            dots[0].get_center())
+        depot = Square(side_length=dots[0].radius * 1.5).rotate(PI/4).set_fill(FOREGROUND, opacity=1.0).move_to(dots[0].get_center())
         self.play(Transform(dots[0], depot))
         text_depot = Text("Depot").scale(.7).next_to(depot, LEFT)
         self.play(FadeIn(text_depot))
@@ -84,7 +86,7 @@ class VRPIntro(Slide):
         for i, dot in enumerate(dots):
             tw = tws[i]
             lengths = ([0] + tw + [99])
-            l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+            l = [(j-i)/100 for i, j in zip(lengths, lengths[1:])]
             before = Rectangle(color=RED, fill_opacity=1, width=l[0], height=height, stroke_width=0)
             during = Rectangle(color=GREEN, fill_opacity=1, width=l[1], height=height, stroke_width=0)
             after = Rectangle(color=RED, fill_opacity=1, width=l[2], height=height, stroke_width=0)
@@ -96,6 +98,7 @@ class VRPIntro(Slide):
         self.pause()
         self.play(AnimationGroup(*[ShrinkToCenter(tw) for tw in tw_group_list]))
         self.pause()
+
 
         # transform the nodes into arrows pointing upwards or downwards, if pickup or drop
         self.play(AnimationGroup(*[FadeOut(dot) for dot in dots[1:]]))
@@ -124,9 +127,7 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*[FadeIn(img) for img in pickup_img + drop_img]))
 
         self.pause()
-        self.play(AnimationGroup(*(
-                    [FadeOut(img) for img in pickup_img + drop_img] + [FadeIn(dot) for dot in dots[1:]] + [
-                FadeOut(text_depot)])))
+        self.play(AnimationGroup(*([FadeOut(img) for img in pickup_img + drop_img] + [FadeIn(dot) for dot in dots[1:]] + [FadeOut(text_depot)])))
         self.pause()
 
         # successor model
@@ -150,8 +151,7 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in successor_candidates], lag_ratio=.2))
         self.play(AnimationGroup(*[FadeOut(box) for box in bounding_boxes], lag_ratio=0.2))
         self.pause()
-        self.play(AnimationGroup(
-            *[successor_candidates[1].animate.set_color(RED), successor_candidates[2].animate.set_color(RED)]))
+        self.play(AnimationGroup(*[successor_candidates[1].animate.set_color(RED), successor_candidates[2].animate.set_color(RED)]))
         self.pause()
         self.play(AnimationGroup(*([FadeOut(successor_candidates[1]), FadeOut(successor_candidates[2])])))
         correct_succ = Arrow(dots[0], dots[1])
@@ -176,8 +176,7 @@ class VRPIntro(Slide):
         # drawback 1: insertion heuristics
         self.play(FadeIn(blist1))
         partial_ordering = [0, 1, 4, 5, 2]
-        partial_route = [Arrow(dots[i], dots[j], color=BLUE) for i, j in
-                         zip(partial_ordering, partial_ordering[1:] + [0])]
+        partial_route = [Arrow(dots[i], dots[j], color=BLUE) for i, j in zip(partial_ordering, partial_ordering[1:] + [0])]
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in partial_route], lag_ratio=.2))
         self.pause()
         self.play(FadeOut(partial_route[3]))
@@ -192,12 +191,10 @@ class VRPIntro(Slide):
         optional = [8, 6, 7, 3]
         optional_circles = [Circle(radius=dots[0].radius, color=ORANGE).move_to(dots[i].get_center()) for i in optional]
         # transform optional nodes into circles
-        # self.play(AnimationGroup(*[dots[i].animate.set_color(ORANGE) for i in optional]))
+        #self.play(AnimationGroup(*[dots[i].animate.set_color(ORANGE) for i in optional]))
         self.play(AnimationGroup(*[Transform(dots[i], optional_circles[j]) for j, i in enumerate(optional)]))
         self.play(FadeIn(blist2))
-        center = (
-        sum(dots[i].get_x() for i in optional) / len(optional), sum(dots[i].get_y() for i in optional) / len(optional),
-        0)
+        center = (sum(dots[i].get_x() for i in optional) / len(optional), sum(dots[i].get_y() for i in optional) / len(optional), 0)
         question_mark = Text("?", color=ORANGE).move_to(center)
         self.play(Write(question_mark))
         self.pause()
@@ -206,35 +203,31 @@ class VRPIntro(Slide):
         visited_arrows = [Arrow(dots[i], dots[j], color=BLUE) for i, j in zip(visited, visited[1:] + [0])]
         excluded_arrows = [Arrow(dots[i], dots[j], color=RED) for i, j in zip(excluded, excluded[1:] + [excluded[0]])]
         self.play(FadeOut(question_mark))
-        # self.play(FadeOut(optional_circles[0]))
+        #self.play(FadeOut(optional_circles[0]))
         self.play(Transform(dots[8], Dot(dots[8].get_center())))
-        # self.play(AnimationGroup(*([dots[i].animate.set_color(RED) for i in excluded] + [dots[i].animate.set_color(FOREGROUND) for i in optional if i not in excluded])))
+        #self.play(AnimationGroup(*([dots[i].animate.set_color(RED) for i in excluded] + [dots[i].animate.set_color(FOREGROUND) for i in optional if i not in excluded])))
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in visited_arrows], lag_ratio=.2))
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in excluded_arrows], lag_ratio=.2))
         self.play(FadeIn(annex_2))
         self.pause()
-        self.wait()
+        self.clear()
 
 
-class SequenceOtherWork(Slide):
 
-    def construct(self):
+        # ==============================
+        # SLIDE SequenceOtherWork
+        # ==============================
+
         text_interval = Text("Interval Sequence Variables", color=BLUE)
         text_scale = .7
-        text_cplex = Tex(r"$\vartriangleright$ Available in CP Optimizer ", "(CPLEX) ", "and ",
-                         "Google OR-Tools").scale(text_scale).set_color_by_tex('CPLEX', BLUE).set_color_by_tex('Google',
-                                                                                                               BLUE)
-        # text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables", "space", "ordered through a ", "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE).set_color_by_tex("space", BACKGROUND)
-        # text_sequence = Tex().scale(text_scale).set_color_by_tex('Sequence', BLUE)
-        # group_nodes_description = VGroup(text_nodes_representation, text_sequence).arrange(DOWN, center=False, aligned_edge=RIGHT)
-        text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables ", "ordered through a ",
-                                        "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE)
+        text_cplex = Tex(r"$\vartriangleright$ Available in CP Optimizer ", "(CPLEX) ", "and ", "Google OR-Tools").scale(text_scale).set_color_by_tex('CPLEX', BLUE).set_color_by_tex('Google', BLUE)
+        #text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables", "space", "ordered through a ", "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE).set_color_by_tex("space", BACKGROUND)
+        #text_sequence = Tex().scale(text_scale).set_color_by_tex('Sequence', BLUE)
+        #group_nodes_description = VGroup(text_nodes_representation, text_sequence).arrange(DOWN, center=False, aligned_edge=RIGHT)
+        text_nodes_representation = Tex(r"$\vartriangleright$ Nodes = ", "Interval Variables ", "ordered through a ", "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE)
         group_nodes_description = VGroup(text_nodes_representation).arrange(DOWN, center=False, aligned_edge=RIGHT)
         text_head_tail = Tex(r"$\vartriangleright$ Head-tail structure").scale(text_scale)
-        text_group = VGroup(text_interval, text_cplex, group_nodes_description, text_head_tail).arrange(DOWN,
-                                                                                                        center=False,
-                                                                                                        aligned_edge=LEFT).to_corner(
-            UP + LEFT)
+        text_group = VGroup(text_interval, text_cplex, group_nodes_description, text_head_tail).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(UP + LEFT)
         coords = [
             np.array([0, 0, 0]),  # head
             np.array([0.5, 0, 0]),
@@ -278,14 +271,10 @@ class SequenceOtherWork(Slide):
         text_head = MarkupText("Head", color=head_color).scale(.5).next_to(arrow_head, DOWN)
         text_tail = MarkupText("Tail", color=tail_color).scale(.5).next_to(arrow_tail, DOWN)
         text_not_sequenced = MarkupText("Not Sequenced").scale(.5).set_y(text_tail.get_y()).set_x(3.75)
-        candidates_head = Ellipse(height=3, width=2, color=head_cand_color).rotate(-PI / 4).move_to(
-            np.array([3.5, 0.25, 0]))  # head candidates
-        candidates_tail = Ellipse(height=2.5, width=2, color=tail_cand_color).rotate(3 * PI / 8).move_to(
-            np.array([4, 0.25, 0]))  # tail candidates
-        text_candidates_head = MarkupText("Candidates Head", color=head_cand_color).scale(.5).move_to(
-            np.array([2.2, 1.75, 0]))
-        text_candidates_tail = MarkupText("Candidates Tail", color=tail_cand_color).scale(.5).move_to(
-            np.array([5.3, 1.75, 0]))
+        candidates_head = Ellipse(height=3, width=2, color=head_cand_color).rotate(-PI/4).move_to(np.array([3.5, 0.25, 0]))  # head candidates
+        candidates_tail = Ellipse(height=2.5, width=2, color=tail_cand_color).rotate(3*PI/8).move_to(np.array([4, 0.25, 0]))  # tail candidates
+        text_candidates_head = MarkupText("Candidates Head", color=head_cand_color).scale(.5).move_to(np.array([2.2, 1.75, 0]))
+        text_candidates_tail = MarkupText("Candidates Tail", color=tail_cand_color).scale(.5).move_to(np.array([5.3, 1.75, 0]))
 
         figure_list = points_list + \
                       [arrow_head, text_head, head_limit] + \
@@ -294,22 +283,16 @@ class SequenceOtherWork(Slide):
                       [candidates_tail, text_candidates_tail] + \
                       [text_not_sequenced]
         figures = VGroup(*figure_list).next_to(text_group, DOWN, buff=0.5).set_x(ORIGIN[0])
-        text_pros_cons = MarkupText(
-            f"<span fgcolor='{GREEN}'>OK</span> optional visits\n<span fgcolor='{RED}'>KO</span> cannot insert anywhere in the sequence").scale(
-            .5)
+        text_pros_cons = MarkupText(f"<span fgcolor='{GREEN}'>OK</span> optional visits\n<span fgcolor='{RED}'>KO</span> cannot insert anywhere in the sequence").scale(.5)
         text_pros_cons.next_to(figures, DOWN).to_corner(LEFT)
 
         self.play(FadeIn(text_group))
         self.pause()
 
-        self.play(AnimationGroup(*([FadeIn(c) for c in circles + dots])))
+        self.play(AnimationGroup(*([FadeIn(c) for c in circles+dots])))
         self.pause()
-        self.play(
-            AnimationGroup(*[GrowArrow(arrow_head), FadeIn(text_head), GrowFromPoint(head_limit, arrow_head.get_end())],
-                           lag_ratio=.3))
-        self.play(
-            AnimationGroup(*[GrowArrow(arrow_tail), FadeIn(text_tail), GrowFromPoint(tail_limit, arrow_tail.get_end())],
-                           lag_ratio=.3))
+        self.play(AnimationGroup(*[GrowArrow(arrow_head), FadeIn(text_head), GrowFromPoint(head_limit, arrow_head.get_end())], lag_ratio=.3))
+        self.play(AnimationGroup(*[GrowArrow(arrow_tail), FadeIn(text_tail), GrowFromPoint(tail_limit, arrow_tail.get_end())], lag_ratio=.3))
         self.play(FadeIn(text_not_sequenced))
         self.pause()
         self.play(Create(candidates_head))
@@ -319,26 +302,29 @@ class SequenceOtherWork(Slide):
         self.pause()
         self.play(FadeIn(text_pros_cons))
         self.pause()
-        self.wait()
+        self.clear()
 
 
-class Sequences(Slide):
 
-    def construct(self):
-        text_sequence = Text("Sequence Variable", color=BLUE).to_corner(UP + LEFT)
-        text_data_structure = Text("data structures", color=BLUE).next_to(text_sequence, RIGHT).to_corner(UP)
+        # ==============================
+        # SLIDE Sequences
+        # ==============================
+
+        text_sequence = Text("Sequence Variable", color=BLUE)
+        text_data_structure = Text("data structures", color=BLUE)
+        title_group = VGroup(text_sequence, text_data_structure).arrange(RIGHT).to_corner(UP + LEFT)
         insert_table = MathTable(
             [["Partial Sequence", "Operation"],
-             [r"\alpha \rightarrow \omega", "Initialization"],
-             [r"\alpha \rightarrow 1 \rightarrow \omega", r"Insert(\alpha, 1)"],
-             [r"\alpha \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(1, 4)"],
-             [r"\alpha \rightarrow 5 \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(\alpha, 5)"]
-             ],
+            [r"\alpha \rightarrow \omega", "Initialization"],
+            [r"\alpha \rightarrow 1 \rightarrow \omega", r"Insert(\alpha, 1)"],
+            [r"\alpha \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(1, 4)"],
+            [r"\alpha \rightarrow 5 \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(\alpha, 5)"]
+            ],
             include_outer_lines=True).next_to(text_sequence, DOWN).set_x(ORIGIN[0])
 
         # coordinates for the dots
         coords = [
-            np.array([-4.25, 0.75, 0]),  # alpha
+            np.array([-4.25, 0.75, 0]),   # alpha
             np.array([-1.75, 2.75, 0]),
             np.array([-1.25, 1.25, 0]),
             np.array([-1, -0.5, 0]),
@@ -370,20 +356,17 @@ class Sequences(Slide):
         text_possible = Text("possible (P)", color=POSSIBLE).scale(0.5)
         text_excluded = Text("excluded (E)", color=EXCLUDED).scale(0.5)
         all_dots = VGroup(*dots).next_to(text_sequence, DOWN, buff=.5).set_x(ORIGIN[0])
-        description_group = VGroup(text_member, text_possible, text_excluded).arrange(RIGHT, buff=1).next_to(all_dots,
-                                                                                                             DOWN)
+        description_group = VGroup(text_member, text_possible, text_excluded).arrange(RIGHT, buff=1).next_to(all_dots, DOWN)
 
         # ordering for the members
-        successors = [Arrow(i.get_center(), j.get_center(), color=MEMBER) for i, j in
-                      zip(members_group, members_group[1:])]
+        successors = [Arrow(i.get_center(), j.get_center(), color=MEMBER) for i, j in zip(members_group, members_group[1:])]
         # successors_group = VGroup(*successors)
         animations = [GrowArrow(succ) for succ in successors]
 
         # predecessors for the nodes
         insertions_arrows = {
             node:
-                [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4,
-                             dash_length=0.15, color=FOREGROUND) for pred in v]
+                [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4, dash_length=0.15, color=FOREGROUND) for pred in v]
             for node, v in insertions.items()
         }
         # make the arrows grow
@@ -421,8 +404,7 @@ class Sequences(Slide):
         n = 5
         self.play(Indicate(dots[n], color=EXCLUDED))
         self.wait()
-        arrows_changed = [insertions_arrows[node][i] for node, v in insertions.items() for i, pred in enumerate(v) if
-                          pred == n or node == n]
+        arrows_changed = [insertions_arrows[node][i] for node, v in insertions.items() for i, pred in enumerate(v) if pred == n or node == n]
         self.play(dots[n].animate.set_color(EXCLUDED))
         self.play(AnimationGroup(*([FadeOut(arrow) for arrow in arrows_changed])))
         self.pause()
@@ -450,8 +432,7 @@ class Sequences(Slide):
         ]))
         self.pause()
         # undo the insertion
-        self.play(AnimationGroup(*[Restore(arrow_selected), Restore(arrow_detour_removed), FadeOut(arrow_detour_added),
-                                   dots[n].animate.set_color(POSSIBLE)]))
+        self.play(AnimationGroup(*[Restore(arrow_selected), Restore(arrow_detour_removed), FadeOut(arrow_detour_added), dots[n].animate.set_color(POSSIBLE)]))
         self.pause()
         self.wait()
 
@@ -475,7 +456,7 @@ class Sequences(Slide):
         self.play(ScaleInPlace(full_schema, 0.8))
         self.play(AnimationGroup(*[full_schema.animate.to_corner(LEFT), FadeIn(text_data_structure)]))
         self.pause()
-        # self.play(AnimationGroup(*[FadeIn(label) for label in nodes_labels if label not in [text_first, text_last]]))
+        #self.play(AnimationGroup(*[FadeIn(label) for label in nodes_labels if label not in [text_first, text_last]]))
         # table of insertions
         text_node = Tex("node $x$")
         text_insert = Tex("$I^x$")
@@ -534,13 +515,12 @@ class Sequences(Slide):
         t0.remove(*[o for i, o in enumerate(t0.get_horizontal_lines()) if i != 0])
         t1, t2 = [MobjectTable([
             [text_node.copy(), text_insert.copy(), text_nsx.copy(), text_npx.copy()],
-            *[[table_label[i].copy(), table_insertions[i].copy(), table_nsx[i].copy(), table_npx[i].copy()] for i in
-              range(j)]
+            *[[table_label[i].copy(), table_insertions[i].copy(), table_nsx[i].copy(), table_npx[i].copy()] for i in range(j)]
         ], v_buff=0.1, h_buff=0.2).to_corner(UP + LEFT).shift(table_shift) for j in [6, len(table_npx)]]
         for t in t1, t2:
             t.remove(*[o for i, o in enumerate(t.get_vertical_lines()) if i != 0])
-            t.remove(*[o for i, o in enumerate(t.get_horizontal_lines()) if i != 0]) \
-                # self.play(AnimationGroup(*[FadeIn(text_node), FadeIn(text_insert), GrowFromPoint(header_line_tiny, header_line_tiny.get_start())]))
+            t.remove(*[o for i, o in enumerate(t.get_horizontal_lines()) if i != 0])\
+        #self.play(AnimationGroup(*[FadeIn(text_node), FadeIn(text_insert), GrowFromPoint(header_line_tiny, header_line_tiny.get_start())]))
         self.play(Create(t0))
         self.wait()
         self.pause()
@@ -552,8 +532,7 @@ class Sequences(Slide):
         self.play(Create(surrounding_rectangle_node_6))
         # show member insertions
         self.play(AnimationGroup(
-            *[Indicate(insertions_arrows[6][j], color=MEMBER, run_time=2) for j, pred in enumerate(insertions[6]) if
-              pred in members]))
+            *[Indicate(insertions_arrows[6][j], color=MEMBER, run_time=2) for j, pred in enumerate(insertions[6]) if pred in members]))
         surrounding_rectangle_1 = SurroundingRectangle(t2.get_cell((6, 3)), color=MEMBER, buff=0)
         self.play(Create(surrounding_rectangle_1))
         self.wait()
@@ -562,8 +541,7 @@ class Sequences(Slide):
 
         # show possible insertions
         self.play(AnimationGroup(
-            *[Indicate(insertions_arrows[6][j], color=POSSIBLE) for j, pred in enumerate(insertions[6]) if
-              pred in possible]))
+            *[Indicate(insertions_arrows[6][j], color=POSSIBLE) for j, pred in enumerate(insertions[6]) if pred in possible]))
         surrounding_rectangle_2 = SurroundingRectangle(t2.get_cell((6, 4)), color=POSSIBLE, buff=0)
         self.play(Create(surrounding_rectangle_2))
         self.wait()
@@ -585,48 +563,46 @@ class Sequences(Slide):
             self.wait()
             self.pause()
 
+
         self.wait()
         # show successor array
         succ_array = MathTable([["succ", "b", "c", r"\omega", "d", "e", "f", "g", "h", "a", r"\alpha"],
                                 ["node"] + [c for c in "abcdefgh"] + [r"\alpha", r"\omega"]],
                                h_buff=0.2, v_buff=0.1, include_outer_lines=False).next_to(t2, DOWN)
         for node in [0, 1, 2, 8, 9]:
-            succ_array.add_highlighted_cell((1, node + 2), color=MEMBER)
-            succ_array.add_highlighted_cell((2, node + 2), color=MEMBER)
+            succ_array.add_highlighted_cell((1, node+2), color=MEMBER)
+            succ_array.add_highlighted_cell((2, node+2), color=MEMBER)
         self.play(Create(succ_array))
         self.wait()
         self.pause()
-        self.wait()
+        self.clear()
 
 
-class DomainConsistency(Slide):
 
-    def construct(self):
+        # ==============================
+        # SLIDE DomainConsistency
+        # ==============================
+
         # domain consistency
         title = Text("Consistency of the domain", color=BLUE).to_corner(UP + LEFT)
 
-        math_tri_partition = MathTex(
-            r"\bullet\hspace{5pt} S \cup P \cup E = X \wedge S \cap P = S \cap E =  P \cap E = \phi")
+        math_tri_partition = MathTex(r"\bullet\hspace{5pt} S \cup P \cup E = X \wedge S \cap P = S \cap E =  P \cap E = \phi")
         text_tri_partition = MarkupText("Members (S), Possible (P), Excluded (E) nodes form a tri-partition").scale(.5)
         tri_partition = VGroup(math_tri_partition, text_tri_partition).arrange(DOWN, center=False, aligned_edge=LEFT)
 
-        math_excluded_not_pred = MathTex(
-            r"\bullet \hspace{5pt} p \in E \implies I^p = \phi \wedge \forall x: p \notin I^x")
+        math_excluded_not_pred = MathTex(r"\bullet \hspace{5pt} p \in E \implies I^p = \phi \wedge \forall x: p \notin I^x")
         text_excluded_not_pred = MarkupText("An excluded element cannot be inserted nor be a predecessor").scale(.5)
-        excluded_not_pred = VGroup(math_excluded_not_pred, text_excluded_not_pred).arrange(DOWN, center=False,
-                                                                                           aligned_edge=LEFT)
+        excluded_not_pred = VGroup(math_excluded_not_pred, text_excluded_not_pred).arrange(DOWN, center=False, aligned_edge=LEFT)
 
         math_member_not_insert = MathTex(r"\bullet \hspace{5pt} p \in S \implies I^p = \phi")
         text_member_not_insert = MarkupText("An element in the sequence cannot be inserted (again)").scale(.5)
-        member_not_insert = VGroup(math_member_not_insert, text_member_not_insert).arrange(DOWN, center=False,
-                                                                                           aligned_edge=LEFT)
+        member_not_insert = VGroup(math_member_not_insert, text_member_not_insert).arrange(DOWN, center=False, aligned_edge=LEFT)
 
         math_no_pred = MathTex(r"\bullet \hspace{5pt} I^p = \phi \implies p \in S \vee p \in E")
-        text_no_pred = MarkupText(
-            "An element without possible predecessor is either excluded or in the sequence").scale(.5)
+        text_no_pred = MarkupText("An element without possible predecessor is either excluded or in the sequence").scale(.5)
         no_pred = VGroup(math_no_pred, text_no_pred).arrange(DOWN, center=False, aligned_edge=LEFT)
 
-        layout = VGroup(title, tri_partition, excluded_not_pred, member_not_insert, no_pred) \
+        layout = VGroup(title, tri_partition, excluded_not_pred, member_not_insert, no_pred)\
             .arrange(DOWN, center=False, aligned_edge=LEFT, buff=.5).to_corner(UP + LEFT)
 
         text_tri_partition.align_to(LEFT).shift(np.array([1, 0, 0]))
@@ -656,8 +632,7 @@ class DomainConsistency(Slide):
             [Tex("Operation"), Tex("Description"), Tex("Complexity")],
             [Tex("isBound(Sq)"), Tex("true iif $\mid P \mid = 0$"), theta_1.copy()],
             [Tex("is\{Member/Possible/Excluded\}(Sq, x)"), Tex("true iff $x \in \{S / P / E\}$"), theta_1.copy()],
-            [Tex("get\{Member/Possible/Excluded\}(Sq, x)"), Tex("enumerate over $\{S / P / E\}$"),
-             MathTex("\Theta(|\{S / P / E\}|)")],
+            [Tex("get\{Member/Possible/Excluded\}(Sq, x)"), Tex("enumerate over $\{S / P / E\}$"), MathTex("\Theta(|\{S / P / E\}|)")],
             [Tex("succ(Sq, x)"), Tex("gives the successor of x"), theta_1.copy()],
             [Tex("pred(Sq, x)"), Tex("gives the predecessor of x"), theta_1.copy()],
             [Tex("insert(Sq, p, x)"), Tex("insert x after node p in Sq"), theta_p.copy()],
@@ -671,7 +646,7 @@ class DomainConsistency(Slide):
         ], v_buff=0.1, h_buff=0.2).scale(0.65).next_to(complexity, DOWN).set_x(ORIGIN[0])
 
         table.remove(*[o for i, o in enumerate(table.get_horizontal_lines()) if i != 0])
-        notification = Text("Constraints notified by insertions, exclusion, removal of insertions") \
+        notification = Text("Constraints notified by insertions, exclusion, removal of insertions")\
             .scale(0.6).next_to(table, DOWN)
         # keep only the first vertical line
         self.play(FadeIn(complexity))
@@ -686,48 +661,61 @@ class DomainConsistency(Slide):
         self.pause()
         self.play(FadeIn(notification))
         self.pause()
-        self.wait()
+        self.clear()
 
 
-class TransitionTimeConstraint(Slide):
 
-    def construct(self):
+        # ==============================
+        # SLIDE TransitionTimeConstraint
+        # ==============================
+
         title = Text("Transition Time Constraint", color=BLUE).to_corner(UP + LEFT)
         self.play(FadeIn(title))
         self.pause()
-        self.wait()
+        self.clear()
 
 
-class OtherConstraints(Slide):
 
-    def construct(self):
+        # ==============================
+        # SLIDE OtherConstraints
+        # ==============================
+
+        self.pause()
+        self.clear()
+
+
+
+        # ==============================
+        # SLIDE SearchProcedure
+        # ==============================
+
+        self.pause()
+        self.clear()
+
+
+
+        # ==============================
+        # SLIDE MultipleProblems
+        # ==============================
+
+        self.pause()
+        self.clear()
+
+
+
+        # ==============================
+        # SLIDE Perspectives
+        # ==============================
+
+        self.pause()
+        self.clear()
+
+
+
+        # ==============================
+        # SLIDE Conclusion
+        # ==============================
+
         self.pause()
         self.wait()
 
-
-class SearchProcedure(Slide):
-
-    def construct(self):
-        self.pause()
-        self.wait()
-
-
-class MultipleProblems(Slide):
-
-    def construct(self):
-        self.pause()
-        self.wait()
-
-
-class Perspectives(Slide):
-
-    def construct(self):
-        self.pause()
-        self.wait()
-
-
-class Conclusion(Slide):
-
-    def construct(self):
-        self.pause()
-        self.wait()
