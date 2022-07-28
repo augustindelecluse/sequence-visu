@@ -16,6 +16,45 @@ class DashedArrow(Arrow, DashedLine):
         super().__init__(*args, **kwargs)
 
 
+class FirstSlide(Slide):
+
+    def construct(self):
+        # title of paper + blablabla
+        scale_title = 1.3
+        scale_name = 0.9
+        scale_description = 0.6
+        text_paper_1 = Text("Sequence Variables", color=BLUE).scale(scale_title)
+        text_paper_2 = Text("for Routing Problems", color=BLUE).scale(scale_title)
+        text_paper = VGroup(text_paper_1, text_paper_2).arrange(DOWN)
+        text_author_1 = Text("Augustin Delecluse").scale(scale_name)
+        text_description_1 = Text("TRAIL, ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium").scale(scale_description)
+        text_author_2 = Text("Pierre Schaus").scale(scale_name)
+        text_description_2 = Text("ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium").scale(scale_description)
+        text_author_3 = Text("Pascal Van Hentenryck").scale(scale_name)
+        text_description_3 = Text("Georgia Institute of Technology, Atlanta, GA, USA").scale(scale_description)
+        text_founding = Text("This work was supported by Service Public de Wallonie Recherche\n under grant n°2010235 – ARIAC by DIGITALWALLONIA4.A").scale(0.5)
+
+        logo_trail = ImageMobject("res/trail.png").scale_to_fit_height(1)
+        logo_uclouvain = ImageMobject("res/640px-UCLouvain_logo.svg.png").scale_to_fit_height(1)
+        logo_georgia_tech = ImageMobject("res/georgia_tech.png").scale_to_fit_height(1)
+        logos_group = Group(logo_uclouvain, logo_trail, logo_georgia_tech).arrange(RIGHT)
+        layout = VGroup(text_paper,
+                        text_author_1, #text_description_1,
+                        text_author_2, #text_description_2,
+                        text_author_3, #text_description_3,
+                        text_founding).arrange(DOWN).to_corner(UP)
+        logos_group.to_corner(DOWN, buff=0.1)
+        background_logos = Rectangle(width=14.2, height=1.6, fill_color=BLUE,
+                                     fill_opacity=1, stroke_opacity=0).to_corner(DOWN, buff=0).set_sheen(-1, UP)
+
+        self.add(logos_group)
+        self.add(layout)
+        self.bring_to_back(background_logos)
+        self.wait()
+        self.pause()
+        self.wait()
+
+
 class VRPIntro(Slide):
 
     def construct(self):
@@ -689,11 +728,225 @@ class DomainConsistency(Slide):
         self.wait()
 
 
-class TransitionTimeConstraint(Slide):
+class TransitionTime(Slide):
 
     def construct(self):
-        title = Text("Transition Time Constraint", color=BLUE).to_corner(UP + LEFT)
+        title = Text("Transition Time Constraint", color=BLUE)
+        blist = BulletedList("Links with transition matrix, time windows, total transition time",
+                             "Transitions must respect the time windows").scale(0.9)
+        layout = VGroup(title, blist).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(UP + LEFT)
+        formula_1 = MathTex(r"\text{\texttt{TransitionTimes}}(Sq, [start], [duration], [[trans]], transitionTime)").scale(0.9)
+        formula_2 = MathTex(r"""\left\{ 
+			\overrightarrow{S} \in D(Sq) \left\vert 
+			\begin{matrix}
+				\forall i, j \in \overrightarrow{S}, i \stackrel{\overrightarrow{S}}{\prec} j \implies 
+				start_i + duration_i + trans_{i, j} \leq start_j \\ 
+				transitionTime = \sum_{i, j \in \overrightarrow{S} \; | \; i \xrightarrow{} j} trans_{i,j}
+			\end{matrix} 
+			\right.
+			\right\}""").scale(0.7)
+        layout_formula = VGroup(formula_1, formula_2).arrange(DOWN)
+        filtering_step_1 = MarkupText(f"<span fgcolor='{BLUE}'>1) </span>Update the time windows").scale(0.6)
+        filtering_step_2 = MarkupText(f"<span fgcolor='{BLUE}'>2) </span>Remove invalid insertions").scale(0.6)
         self.play(FadeIn(title))
+        self.play(FadeIn(blist))
+        self.pause()
+        self.play(FadeIn(formula_1))
+        self.play(FadeIn(formula_2))
+        self.pause()
+
+        # only keep the formula and present the algorithm
+        self.play(AnimationGroup(*[FadeOut(formula_1), FadeOut(blist), FadeOut(title)]))
+        self.play(formula_2.animate.to_corner(UP))
+        test_cases_group = VGroup(filtering_step_1, filtering_step_2)\
+            .arrange(RIGHT, center=False, buff=1)
+        self.pause()
+        test_cases_group.next_to(formula_2, DOWN).to_corner(LEFT)
+
+        # setup for the drawing of the sequence
+        # coordinates for the dots
+        coords = [
+            np.array([-4.25, 0.75, 0]),  # alpha
+            np.array([-1.75, 2.75, 0]),
+            np.array([-1.25, 1.25, 0]),
+            np.array([-1, -0.5, 0]),
+            np.array([-4, -1.5, 0]),  # last member
+            np.array([2, 2.5, 0]),
+            np.array([1.75, 1, 0]),
+            np.array([3.25, -0.75, 0]),
+            np.array([3.5, 1.5, 0]),  # last possible
+            np.array([4, -0.2, 0]),
+        ]
+        # draw the dots
+        dots = [Dot(i, radius=0.16) for i in coords]
+        # partition of the nodes
+        members = [0, 1, 2, 3, 4]
+        possible = [5, 6, 7, 8]
+        insertions = {
+            5: [1, 2, 3],
+            6: [1, 2, 3, 5],
+            7: [2, 3, 5, 6],
+            8: [1],
+        }
+        excluded = [9]
+        members_group = VGroup(*[dots[i] for i in members]).set_color(MEMBER)
+        excluded_group = VGroup(*[dots[i] for i in excluded]).set_color(EXCLUDED)
+        possible_group = VGroup(*[dots[i] for i in possible]).set_color(POSSIBLE)
+
+        # ordering for the members
+        successors = [Arrow(i.get_center(), j.get_center(), color=MEMBER) for i, j in
+                      zip(members_group, members_group[1:])]
+
+        # predecessors for the nodes
+        insertions_arrows = {
+            node:
+                [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4,
+                             dash_length=0.15, color=FOREGROUND) for pred in v]
+            for node, v in insertions.items()
+        }
+        schema = VGroup(members_group, excluded_group, possible_group, *successors,
+                        *[arrow for n, v in insertions_arrows.items() for arrow in v])\
+            .next_to(test_cases_group, DOWN, buff=0.75)\
+            .set_x(ORIGIN[0])
+        # add time window on top of nodes: values between [0..99]
+        tws = [
+            [1, 99],
+            [5, 99],
+            [5, 99],
+            [50, 99],
+            [12, 98],  # last member
+            [5, 45],  # case 1: too early starting from node 3
+            [60, 87],  # case 2: cannot close starting from node 1
+            [40, 95],
+            [60, 99],  # case 3: too long
+            [50, 67],
+        ]
+        # a time window is simply a red rectangle for the invalid time, a green for the valid time and a red again
+        tw_animation_list = []
+        tw_group_list = []
+        height = 0.1
+        tw_rectangles = []
+        for i, dot in enumerate(dots):
+            tw = tws[i]
+            lengths = ([0] + tw + [99])
+            l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+            before = Rectangle(color=RED, fill_opacity=1, width=l[0], height=height, stroke_width=0)
+            during = Rectangle(color=GREEN, fill_opacity=1, width=l[1], height=height, stroke_width=0)
+            after = Rectangle(color=RED, fill_opacity=1, width=l[2], height=height, stroke_width=0)
+            tw_rectangles.append([before, during, after])
+            group = VGroup(before, during, after).arrange(RIGHT, buff=0).next_to(dot, UP)
+            tw_group_list.append(group)
+            animation = GrowFromPoint(group, dot)
+            tw_animation_list.append(animation)
+
+        self.play(FadeIn(schema))
+        self.play(AnimationGroup(*tw_animation_list))
+
+        # time window update
+        self.play(FadeIn(filtering_step_1))
+        self.pause()
+        # grow the "before" part from the sequence
+        transitions = [10, 12, 13, 10]  # durations for the transitions, in integers
+        start = tws[0][0]
+        animations_tw_update = []
+        for i, node in enumerate(members[1:]):
+            start += transitions[i]
+            if start > tws[node][0]:  # need to update the tw
+                lengths = ([0] + tws[node] + [99])
+                l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+                old_length = l[0]
+                tws[node][0] = start
+                lengths = ([0] + tws[node] + [99])
+                l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+                diff = (l[0] - old_length) / 2
+                old_before, old_during = tw_rectangles[node][0], tw_rectangles[node][1]
+                new_before = Rectangle(color=RED, fill_opacity=1, width=l[0], height=height, stroke_width=0)\
+                    .set_x(old_before.get_x() + diff).set_y(old_before.get_y())
+                new_during = Rectangle(color=GREEN, fill_opacity=1, width=l[1], height=height, stroke_width=0)\
+                    .set_x(old_during.get_x() + diff).set_y(old_during.get_y())
+                animations_tw_update.append(AnimationGroup(*[Transform(old_before, new_before), Transform(old_during, new_during)]))
+
+            else:
+                start = tws[node][0]
+        self.play(AnimationGroup(*animations_tw_update, lag_ratio=2))
+        self.pause()
+
+        # grow the "after" part from the sequence
+        end = tws[4][1]
+        animations_tw_update = []
+        for i, node in enumerate(members[-2::-1]):  # iterate over from members[0]..members[-2] in reverse order
+            end -= transitions[-i]
+            if end < tws[node][1]:  # need to update the tw
+                lengths = ([0] + tws[node] + [99])
+                l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+                old_length = l[2]
+                tws[node][1] = end
+                lengths = ([0] + tws[node] + [99])
+                l = [(j - i) / 100 for i, j in zip(lengths, lengths[1:])]
+                diff = (l[2] - old_length) / 2
+                old_after, old_during = tw_rectangles[node][2], tw_rectangles[node][1]
+                new_after = Rectangle(color=RED, fill_opacity=1, width=l[2], height=height, stroke_width=0)\
+                    .set_x(old_after.get_x() - diff).set_y(old_after.get_y())
+                new_during = Rectangle(color=GREEN, fill_opacity=1, width=l[1], height=height, stroke_width=0)\
+                    .set_x(old_during.get_x() - diff).set_y(old_during.get_y())
+                animations_tw_update.append(AnimationGroup(*[Transform(old_after, new_after), Transform(old_during, new_during)]))
+            else:
+                end = tws[node][1]
+        self.play(AnimationGroup(*animations_tw_update, lag_ratio=2))
+        self.pause()
+
+        # insertion removal
+        self.play(FadeIn(filtering_step_2))
+
+        self.pause()
+        # cannot reach the node from the pred
+        node, pred = (5, 2)
+        highlight_1 = SurroundingRectangle(dots[node])
+        highlight_2 = SurroundingRectangle(dots[insertions[node][pred]])
+        self.play(AnimationGroup(*[
+            Create(highlight_1),
+            Create(highlight_2),
+            insertions_arrows[node][pred].animate.set_color(RED)]))
+        self.pause()
+        self.play(AnimationGroup(*[
+            FadeOut(highlight_1),
+            FadeOut(highlight_2),
+            FadeOut(insertions_arrows[node][pred])]))
+
+        self.pause()
+        # cannot close the sequence
+        node, pred = (6, 0)
+        highlight_1 = SurroundingRectangle(dots[node])
+        highlight_2 = SurroundingRectangle(dots[insertions[node][pred]])
+        highlight_3 = SurroundingRectangle(dots[2])
+        self.play(AnimationGroup(*[
+            Create(highlight_1),
+            Create(highlight_2),
+            Create(highlight_3),
+            insertions_arrows[node][pred].animate.set_color(RED)]))
+        self.pause()
+        self.play(AnimationGroup(*[
+            FadeOut(highlight_1),
+            FadeOut(highlight_2),
+            FadeOut(highlight_3),
+            FadeOut(insertions_arrows[node][pred])]))
+
+        self.pause()
+        # exceeding max distance
+        node, pred = (8, 0)
+        highlight_1 = SurroundingRectangle(dots[node])
+        highlight_2 = SurroundingRectangle(dots[insertions[node][pred]])
+        self.play(AnimationGroup(*[
+            Create(highlight_1),
+            Create(highlight_2),
+            insertions_arrows[node][pred].animate.set_color(RED)]))
+        self.pause()
+        self.play(AnimationGroup(*[
+            FadeOut(highlight_1),
+            FadeOut(highlight_2),
+            FadeOut(insertions_arrows[node][pred])]))
+        self.play(dots[node].animate.set_color(EXCLUDED))
+
         self.pause()
         self.wait()
 
