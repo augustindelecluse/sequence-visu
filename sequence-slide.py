@@ -16,7 +16,7 @@ class DashedArrow(Arrow, DashedLine):
         super().__init__(*args, **kwargs)
 
 
-class FirstSlide(Slide):
+class MainTitle(Slide):
 
     def construct(self):
         # title of paper + blablabla
@@ -218,12 +218,15 @@ class VRPIntro(Slide):
         partial_route = [Arrow(dots[i], dots[j], color=BLUE) for i, j in
                          zip(partial_ordering, partial_ordering[1:] + [0])]
         self.play(AnimationGroup(*[GrowArrow(arrow) for arrow in partial_route], lag_ratio=.2))
+        box = SurroundingRectangle(dots[8])
+        self.play(Create(box))
         self.pause()
         self.play(FadeOut(partial_route[3]))
         partial_route.remove(partial_route[3])
         detour = [Arrow(dots[5], dots[8], color=BLUE), Arrow(dots[8], dots[2], color=BLUE)]
         self.play(AnimationGroup(*[GrowArrow(detour[0]), GrowArrow(detour[1])], lag_ratio=.2))
         self.play(FadeIn(annex_1))
+        self.play(Uncreate(box))
         self.pause()
 
         # drawback 2: optional nodes
@@ -689,7 +692,7 @@ class DomainConsistency(Slide):
         self.clear()
         # show the complexity
         complexity = Text("API and complexities", color=BLUE).to_corner(UP + LEFT)
-        theta_p = MathTex(r"\Theta(P)")
+        theta_p = MathTex(r"\Theta(|P|)")
         theta_1 = MathTex(r"\Theta(1)")
         table = MobjectTable([
             [Tex("Operation"), Tex("Description"), Tex("Complexity")],
@@ -706,7 +709,7 @@ class DomainConsistency(Slide):
             [Tex("getMemberInserts(Sq, x)"), Tex("enumerate over $I^x \cap S$"), MathTex("\Theta(min(|I^x|, |S|))")],
             [Tex("getPossibleInserts(Sq, x)"), Tex("enumerate over $I^x \cap P$"), MathTex("\Theta(min(|I^x|, |P|))")],
             [Tex("canInsert(Sq, p, x)"), Tex("true iff $p \in I^x$"), theta_1.copy()],
-            [Tex("removeInsert(Sq, p, x)"), Tex("remove p from $I^x$"), MathTex("\mathcal{O}(P)")],
+            [Tex("removeInsert(Sq, p, x)"), Tex("remove p from $I^x$"), MathTex("\mathcal{O}(|P|)")],
         ], v_buff=0.1, h_buff=0.2).scale(0.65).next_to(complexity, DOWN).set_x(ORIGIN[0])
 
         table.remove(*[o for i, o in enumerate(table.get_horizontal_lines()) if i != 0])
@@ -954,6 +957,29 @@ class TransitionTime(Slide):
 class OtherConstraints(Slide):
 
     def construct(self):
+        text_title = Text("Current existing constraints", color=BLUE)
+        text_dependence = MathTex(r"\bullet\hspace{5pt} \text{Dependency}")
+        desc_dependence = MarkupText("Nodes are included / excluded together").scale(.5)
+        dependence = VGroup(text_dependence, desc_dependence).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        text_precedence = MathTex(r"\bullet \hspace{5pt} \text{Precedence}")
+        desc_precedence = MarkupText("Nodes must respect a given order").scale(.5)
+        precedence = VGroup(text_precedence, desc_precedence).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        text_cumulative = MathTex(r"\bullet \hspace{5pt} \text{Cumulative}")
+        desc_cumulative = MarkupText("Respect a max capacity (pickup and delivery problems)").scale(.5)
+        cumulative = VGroup(text_cumulative, desc_cumulative).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        text_disjoint = MathTex(r"\bullet \hspace{5pt} \text{Disjoint}")
+        desc_disjoint = MarkupText("A node is visited by one of several Sequence ").scale(.5)
+        disjoint = VGroup(text_disjoint, desc_disjoint).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        layout = VGroup(text_title, dependence, precedence, cumulative, disjoint) \
+            .arrange(DOWN, center=False, aligned_edge=LEFT, buff=.5).to_corner(UP + LEFT)
+        for i in [desc_dependence, desc_precedence, desc_cumulative, desc_disjoint]:
+            i.shift(np.array([0.5, 0, 0]))
+        self.play(FadeIn(text_title))
+        self.play(AnimationGroup(*[FadeIn(dependence), FadeIn(precedence), FadeIn(cumulative), FadeIn(disjoint)]))
         self.pause()
         self.wait()
 
@@ -965,9 +991,154 @@ class SearchProcedure(Slide):
         self.wait()
 
 
-class MultipleProblems(Slide):
+class Problems(Slide):
 
     def construct(self):
+        # TSPTW
+        title_tsptw = Text("TSP with Time windows", color=BLUE)
+        desc_1 = [
+            MathTex(r"\bullet\hspace{5pt} \text{Objective = minimize traveled distance}"),
+        ]
+        # DARP
+        title_darp = Text("Dial-A-Ride Problem (DARP)", color=BLUE)
+        desc_2 = [
+            MathTex(r"\bullet\hspace{5pt} \text{Time window}"),
+            MathTex(r"\bullet\hspace{5pt} \text{Multiple vehicles}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Bounded travel time}").scale(.8),
+            MathTex(r"\bullet\hspace{5pt} \text{Pickup and delivery}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Bounded delivery time}").scale(.8),
+            MathTex(r"\bullet\hspace{5pt} \text{Objective = minimize traveled distance}"),
+        ]
+        text = VGroup(*desc_2).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.3)
+        problems = VGroup(title_tsptw, desc_1[0], title_darp, text).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.5).to_corner(UP + LEFT)
+        for i in [2, 4]:
+            desc_2[i].shift(np.array([0.5, 0, 0]))
+        self.play(FadeIn(title_tsptw))
+        self.play(FadeIn(desc_1[0]))
+        self.pause()
+        self.play(FadeIn(title_darp))
+        self.play(FadeIn(text))
+        self.pause()
+        self.play(FadeOut(problems))
+
+        # PTP
+        title_ptp = Text("Patient Transportation Problem", color=BLUE).to_corner(UP + LEFT)
+        desc = [
+            MathTex(r"\bullet\hspace{5pt} \text{DARP with extensions}"),
+            MathTex(r"\bullet\hspace{5pt} \text{Transport patients to hospitals}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{And possibly back home}").scale(.8),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Travel back by the same vehicle (or not)}").scale(.8),
+            MathTex(r"\bullet\hspace{5pt} \text{Vehicle categories}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Wheelchairs cannot go in all vehicles}").scale(.8),
+            MathTex(r"\bullet\hspace{5pt} \text{Objective = maximize number of patients transported}"),
+        ]
+        text = VGroup(*desc).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.3)\
+            .to_corner(LEFT)\
+            .set_y(ORIGIN[1])
+        for i in [2, 3, 5]:
+            desc[i].shift(np.array([0.5, 0, 0]))
+        self.play(FadeIn(title_ptp))
+        self.play(FadeIn(text))
+        self.pause()
+        self.clear()
+        for title in [title_tsptw, title_darp, title_ptp]:
+            title.to_corner(UP)
+        # results sections
+
+        # tsptw
+        self.play(FadeIn(title_tsptw))
+        table = MobjectTable([
+            [Tex("Instance", color=BLUE),
+             Tex("Previous best", color=BLUE),
+             Tex("New best", color=BLUE),
+             Tex("Time [s]", color=BLUE)
+             ],
+            [Tex("rbg092a"), Tex("7160"), Tex("7158"), Tex("2.70")],
+            [Tex("rbg132"), Tex("8470"), Tex("8468"), Tex("0.76")],
+            [Tex("rbg132.2"), Tex("8200"), Tex("8194"), Tex("37.76")],
+            [Tex("rbg152.3"), Tex("9797"), Tex("9796"), Tex("0.41")],
+            [Tex("rbg172a"), Tex("10,961"), Tex("10,956"), Tex("113.83")],
+            [Tex("rbg193"), Tex("12,547"), Tex("12,538"), Tex("55.57")],
+            [Tex("rbg193.2"), Tex("12,167"), Tex("12,159"), Tex("242.54")],
+            [Tex("rbg201"), Tex("12,967"), Tex("12,948"), Tex("152.53")],
+            [Tex("rbg233"), Tex("15,031"), Tex("14,994"), Tex("264.70")],
+            [Tex("rbg233.2"), Tex("14,549"), Tex("14,523"), Tex("24.20")],
+        ], v_buff=0.15, h_buff=1, arrange_in_grid_config={"cell_alignment": RIGHT})\
+            .next_to(title_tsptw, DOWN).set_x(ORIGIN[0])
+        for i, o in enumerate(table.get_horizontal_lines()):
+            if i == 0:
+                o.set_color(BLUE)
+            else:
+                table.remove(o)
+        for i, o in enumerate(table.get_vertical_lines()):
+            o.set_color(BLUE)
+        #table.remove(*[o for i, o in enumerate(table.get_horizontal_lines()) if i != 0])
+        self.play(FadeIn(table))
+        self.pause()
+        self.play(AnimationGroup(*[FadeOut(title_tsptw, table)]))
+        # darp
+        self.play(FadeIn(title_darp))
+        #myTemplate = TexTemplate()
+        #myTemplate.add_to_preamble(r"\usepackage{xcolor}")
+        table = Tex(r"""
+        \begin{tabular}[t]{|c|c|r|r|r|r|r|r|} 
+        \hline
+        \multicolumn8{|c|}{\textbf{15 minutes run - initial solution provided}} \\ 
+        \hline 
+        \multicolumn{2}{|c|}{\textbf{class} $a$} & \multicolumn{2}{|c|}{\textbf{LNS-FFPA}}& \multicolumn{2}{|c|}{\textbf{Sequence}}& \multicolumn{2}{|c|}{\textbf{CPO}}\\ 
+        \hline 
+        	m & n & \multicolumn{1}{|c|}{Mean} & \multicolumn{1}{|c|}{Best} & \multicolumn{1}{|c|}{Mean} & \multicolumn{1}{|c|}{Best} & \multicolumn{1}{|c|}{Mean} & \multicolumn{1}{|c|}{Best} \\ 
+        \hline 
+        3 & 24  & 191.76 & 191.40 & \textbf{190.89} & \textbf{190.21} & 196.11 & 196.00\\ 
+        4 & 36  & \textbf{291.71} & \textbf{291.71} & 294.72 & 292.72 & 318.97 & 318.97\\ 
+        5 & 48  & 308.95 & 306.97 & \textbf{307.09} & \textbf{304.38} & 327.37 & 327.00\\ 
+        6 & 72  & 532.55 & 524.97 & \textbf{531.84} & \textbf{519.76} & 579.79 & 579.77\\ 
+        7 & 72  & \textbf{554.57} & 550.42 & 554.65 & \textbf{548.72} & 614.02 & 614.00\\ 
+        8 & 108  & \textbf{752.29} & \textbf{742.08} & 794.86 & 755.00 & 924.04 & 923.86\\ 
+        9 & 96  & \textbf{622.19} & 614.65 & 625.68 & \textbf{611.15} & 740.26 & 740.26\\ 
+        10 & 144  & \textbf{950.16} & \textbf{929.31} & 1011.42 & 962.21 & t/o & t/o\\ 
+        11 & 120  & \textbf{699.32} & \textbf{687.99} & 718.58 & 709.49 & 861.74 & 861.73\\ 
+        13 & 144  & \textbf{878.33} & \textbf{864.81} & 901.71 & 874.56 & 1042.82 & 1042.82\\ 
+        \hline \multicolumn{2}{|c|}{\textit{Avg.}} & \textbf{578.18} & \textbf{570.43}& 593.14 & 576.82& t/o & t/o\\ 
+        \hline 
+        \end{tabular} """).scale(0.75).to_corner(DOWN, buff=0.1)
+        self.play(FadeIn(table))
+        self.pause()
+        self.play(AnimationGroup(*[FadeOut(title_darp, table)]))
+
+        # ptp
+        table = MobjectTable([
+            [Tex("Difficulty"),
+             Tex("Name"),
+             Tex("$|H|$"),
+             Tex("$|V|$"),
+             Tex("$|R|$"),
+             Tex(r"SCHED\\+MSS"),
+             Tex("Sequence"),
+             ],
+            [Tex("Easy"), Tex("RAND-E-8"), Tex("32"), Tex("12"), Tex("128"), Tex("128", color=BLUE), Tex("128", color=BLUE)],
+            [Tex("Easy"), Tex("RAND-E-9"), Tex("36"), Tex("14"), Tex("144"), Tex("144", color=BLUE), Tex("143")],
+            [Tex("Easy"), Tex("RAND-E-10"), Tex("40"), Tex("12"), Tex("160"), Tex("158", color=BLUE), Tex("156")],
+            [Tex("Medium"), Tex("RAND-M-8"), Tex("64"), Tex("8"), Tex("128"), Tex("89"), Tex("91", color=BLUE)],
+            [Tex("Medium"), Tex("RAND-M-9"), Tex("72"), Tex("8"), Tex("144"), Tex("89"), Tex("93", color=BLUE)],
+            [Tex("Medium"), Tex("RAND-M-10"), Tex("80"), Tex("9"), Tex("160"), Tex("109"), Tex("113", color=BLUE)],
+            [Tex("Hard"), Tex("RAND-H-8"), Tex("128"), Tex("8"), Tex("128"), Tex("77"), Tex("87", color=BLUE)],
+            [Tex("Hard"), Tex("RAND-H-9"), Tex("144"), Tex("8"), Tex("144"), Tex("78"), Tex("84", color=BLUE)],
+            [Tex("Hard"), Tex("RAND-H-10"), Tex("160"), Tex("8"), Tex("160"), Tex("76"), Tex("84", color=BLUE)],
+        ], v_buff=0.15, h_buff=0.4, arrange_in_grid_config={"cell_alignment": RIGHT})\
+            .next_to(title_tsptw, DOWN).set_x(ORIGIN[0])
+        for i, o in enumerate(table.get_horizontal_lines()):
+            if i % 3 == 0:
+                o.set_color(BLUE)
+            else:
+                table.remove(o)
+        for i, o in enumerate(table.get_vertical_lines()):
+            if i in [4, 5]:
+                o.set_color(BLUE)
+            else:
+                table.remove(o)
+        self.play(FadeIn(title_darp))
+        self.play(FadeIn(table))
         self.pause()
         self.wait()
 
@@ -975,6 +1146,25 @@ class MultipleProblems(Slide):
 class Perspectives(Slide):
 
     def construct(self):
+        title = Text("Perspectives", color=BLUE).scale(1.2).to_corner(UP)
+        texts = [
+            MathTex(r"\bullet\hspace{5pt} \text{Optimize and implement new constraints}"),
+            MathTex(r"\bullet\hspace{5pt} \text{Tackle more VRP}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Min-Cost TSP with Drone}").scale(.8),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Capacitated VRP}").scale(.8),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{\dots}").scale(.8),
+            MathTex(r"\bullet\hspace{5pt} \text{Use Sequence Variables on scheduling problems}"),
+            MathTex(r"\bullet\hspace{5pt} \text{Analyze variations of the sequences}"),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Different consistency}").scale(.8),
+            MathTex(r"\vartriangleright \hspace{5pt} \text{Insertions = pairs of pred. and succ.}").scale(.8),
+        ]
+        text = VGroup(*texts).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.3)\
+            .to_corner(DOWN + LEFT)
+        for i in [2, 3, 4, 7, 8]:
+            texts[i].shift(np.array([0.5, 0, 0]))
+        self.play(FadeIn(title))
+        self.wait()
+        self.play(FadeIn(text))
         self.pause()
         self.wait()
 
@@ -982,5 +1172,21 @@ class Perspectives(Slide):
 class Conclusion(Slide):
 
     def construct(self):
+        title = Text("Conclusion", color=BLUE).scale(1.2).to_corner(UP)
+        text_1 = MathTex(r"\bullet\hspace{5pt} \text{Sequence Variables = CP alternative to successor model}")
+        text_2 = MathTex(r"\vartriangleright \hspace{5pt} \text{Can model optional visits}").scale(.8)
+        text_3 = MathTex(r"\vartriangleright \hspace{5pt} \text{Compatible with insertions heuristics}").scale(.8)
+        text_4 = MathTex(r"\bullet\hspace{5pt} \text{Efficient for several VRP}")
+        text_5 = MathTex(r"\bullet\hspace{5pt} \text{Improvements are still expected}")
+        text = VGroup(text_1, text_2, text_3, text_4, text_5).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.5)\
+            .to_corner(LEFT)\
+            .set_y(ORIGIN[1])
+        text_2.shift(np.array([0.5, 0, 0]))
+        text_3.shift(np.array([0.5, 0, 0]))
+        text_bye = Text("Thanks for your attention!", color=BLUE).scale(0.9).to_corner(DOWN)
+        self.play(FadeIn(title))
+        self.play(FadeIn(text))
+        self.pause()
+        self.play(FadeIn(text_bye))
         self.pause()
         self.wait()
