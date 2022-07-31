@@ -10,6 +10,8 @@ merged = "presentation.py"
 INDENT = " " * 4  # base indent from within the file
 
 if __name__ == "__main__":
+    bottom_line_creation = 'slide_number = Text("1", color=BLUE)'
+
     header = []
     construct = []
     pattern_construct = "\W+def\W+construct\W*\(\W*self\W*\)\W*:"
@@ -48,4 +50,5 @@ if __name__ == "__main__":
     with open(merged, "w") as file:
         file.writelines(header)
         file.writelines(["class Presentation(Slide):\n", "\n", f"{INDENT}def construct(self):\n"])
+        # TODO add bottom text with slide number (lower right part)
         file.writelines(construct)

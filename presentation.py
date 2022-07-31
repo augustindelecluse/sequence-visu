@@ -601,7 +601,7 @@ class Presentation(Slide):
         self.wait()
         self.pause()
         # show insertions for node 6
-        surrounding_rectangle_node_6 = SurroundingRectangle(dots[6], color=POSSIBLE)
+        surrounding_rectangle_node_6 = SurroundingRectangle(dots[6])
         self.play(Create(surrounding_rectangle_node_6))
         # show member insertions
         self.play(AnimationGroup(
@@ -640,7 +640,7 @@ class Presentation(Slide):
 
         self.wait()
         # show successor array
-        succ_array = MathTable([["succ", "b", "c", r"\omega", "d", "e", "f", "g", "h", "a", r"\alpha"],
+        succ_array = MathTable([["\phantom{fg}\makebox[0pt][r]{succ}", "\phantom{fg}\makebox[0pt][r]{b}", "\phantom{fg}\makebox[0pt][r]{c}", r"\omega", "d", "\phantom{fg}\makebox[0pt][r]{e}", "\phantom{fg}\makebox[0pt][r]{f}", "g", "h", "a", r"\alpha"],
                                 ["node"] + [c for c in "abcdefgh"] + [r"\alpha", r"\omega"]],
                                h_buff=0.2, v_buff=0.1, include_outer_lines=False).next_to(t2, DOWN)
         for node in [0, 1, 2, 8, 9]:
@@ -1006,8 +1006,8 @@ class Presentation(Slide):
         # SLIDE SearchProcedure
         # ==============================
 
-        self.pause()
-        self.clear()
+        #self.pause()
+        #self.clear()
 
 
 
@@ -1125,7 +1125,7 @@ class Presentation(Slide):
         \end{tabular} """).scale(0.75).to_corner(DOWN, buff=0.1)
         self.play(FadeIn(table))
         self.pause()
-        self.play(AnimationGroup(*[FadeOut(title_darp, table)]))
+        self.play(AnimationGroup(*[FadeOut(title_ptp, table)]))
 
         # ptp
         table = MobjectTable([
