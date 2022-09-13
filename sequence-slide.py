@@ -1,16 +1,19 @@
 import numpy as np
 from manim import *
 from manim_presentation import Slide
+import re
 import random
 
 MEMBER = GREEN
 POSSIBLE = BLUE
 EXCLUDED = RED
-BACKGROUND = BLACK
-FOREGROUND = WHITE
+REQUIRED = GOLD
+BG = BLACK
+FG = WHITE
 TITLE_BUF = 0.5  # length between title and first text under it
 TABLE_HIGHLIGHT = GREEN
 
+config.background_color = BG
 
 class DashedArrow(Arrow, DashedLine):
 
@@ -22,33 +25,35 @@ class MainTitle(Slide):
 
     def construct(self):
         # title of paper + blablabla
-        scale_title = 1.3
-        scale_name = 0.9
-        scale_description = 0.6
+        scale_title = 1.2
+        scale_name = 0.7
+        scale_description = 0.5
         text_paper_1 = Text("Sequence Variables", color=BLUE).scale(scale_title)
         text_paper_2 = Text("for Routing Problems", color=BLUE).scale(scale_title)
-        text_paper = VGroup(text_paper_1, text_paper_2).arrange(DOWN)
+        text_paper = VGroup(text_paper_1, text_paper_2).arrange(DOWN).to_corner(UP)
         text_author_1 = Text("Augustin Delecluse").scale(scale_name)
-        text_description_1 = Text("TRAIL, ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium").scale(scale_description)
+        text_description_1 = Text("TRAIL, ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium", slant=ITALIC).scale(scale_description)
         text_author_2 = Text("Pierre Schaus").scale(scale_name)
-        text_description_2 = Text("ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium").scale(scale_description)
+        text_description_2 = Text("ICTEAM, UCLouvain, Louvain-la-Neuve, Belgium", slant=ITALIC).scale(scale_description)
         text_author_3 = Text("Pascal Van Hentenryck").scale(scale_name)
-        text_description_3 = Text("Georgia Institute of Technology, Atlanta, GA, USA").scale(scale_description)
+        text_description_3 = Text("Georgia Institute of Technology, Atlanta, GA, USA", slant=ITALIC).scale(scale_description)
 
         logo_trail = ImageMobject("res/trail.png").scale_to_fit_height(1)
         logo_uclouvain = ImageMobject("res/640px-UCLouvain_logo.svg.png").scale_to_fit_height(1)
         logo_georgia_tech = ImageMobject("res/georgia_tech.png").scale_to_fit_height(1)
         logos_group = Group(logo_uclouvain, logo_trail, logo_georgia_tech).arrange(RIGHT)
-        layout = VGroup(text_paper,
-                        text_author_1, #text_description_1,
-                        text_author_2, #text_description_2,
-                        text_author_3, #text_description_3,
-                        ).arrange(DOWN).to_corner(UP)
+        layout = VGroup(text_author_1, text_description_1,
+                        text_author_2, text_description_2,
+                        text_author_3, text_description_3,
+                        ).arrange(DOWN).next_to(text_paper, DOWN, buff=TITLE_BUF)
         logos_group.to_corner(DOWN, buff=0.1)
-        background_logos = Rectangle(width=14.2, height=1.6, fill_color=BLUE,
-                                     fill_opacity=1, stroke_opacity=0).to_corner(DOWN, buff=0).set_sheen(-1, UP)
+        #background_logos = Rectangle(width=14.2, height=1.6, fill_color=BLUE,
+        #                             fill_opacity=1, stroke_opacity=0).to_corner(DOWN, buff=0).set_sheen(-1, UP)
+        background_logos = Rectangle(width=14.2, height=1.15, fill_color=WHITE,
+                                     fill_opacity=1, stroke_opacity=0).to_corner(DOWN, buff=0)
 
         self.add(logos_group)
+        self.add(text_paper)
         self.add(layout)
         self.bring_to_back(background_logos)
         self.wait()
@@ -73,7 +78,7 @@ class VRPIntro(Slide):
             np.array([2, 2.5, 0]),
             np.array([1.75, 1, 0]),
             np.array([3.25, -0.75, 0]),
-            np.array([2.5, -2, 0]),
+            np.array([2.5, -1.75, 0]),
             np.array([1.5, 0, 0]),
         ]
         dots = [Dot(i) for i in coords]
@@ -91,7 +96,7 @@ class VRPIntro(Slide):
         self.pause()
         # remove the path and add new path for 2 vehicles
         # transform node 0 to become a depot
-        depot = Square(side_length=dots[0].radius * 1.5).rotate(PI / 4).set_fill(FOREGROUND, opacity=1.0).move_to(
+        depot = Square(side_length=dots[0].radius * 1.5).rotate(PI / 4).set_fill(FG, opacity=1.0).move_to(
             dots[0].get_center())
         self.play(Transform(dots[0], depot))
         text_depot = Text("Depot").scale(.7).next_to(depot, LEFT)
@@ -141,7 +146,6 @@ class VRPIntro(Slide):
         self.play(AnimationGroup(*[FadeOut(dot) for dot in dots[1:]]))
         pickups = [1, 4, 3, 6]
         drops = [2, 5, 7, 8]
-        request_colors = [GREEN, BLUE, RED, GOLD]
         images_height = height * 4
         pickup_img = [
             ImageMobject("res/restaurant_red.png").scale_to_fit_height(images_height),
@@ -207,10 +211,10 @@ class VRPIntro(Slide):
         annex_1 = Tex(r"$\rightarrow$ Some kind of LNS")
         blist2 = Tex("2. Represent optional visits")
         annex_2 = Tex(r"$\rightarrow$ Fake vehicle")
-        successor_group = VGroup(text_successor,
-                                 VGroup(blist1, annex_1).arrange(RIGHT),
+        group_succ_1 = VGroup(VGroup(blist1, annex_1).arrange(RIGHT),
                                  VGroup(blist2, annex_2).arrange(RIGHT)
                                  ).arrange(DOWN, center=False, aligned_edge=LEFT)
+        successor_group = VGroup(text_successor, group_succ_1).arrange(DOWN, center=False, aligned_edge=LEFT, buff=TITLE_BUF)
         self.pause()
 
         # drawback 1: insertion heuristics
@@ -274,9 +278,8 @@ class SequenceOtherWork(Slide):
                                         "Sequence Variable").scale(text_scale).set_color_by_tex('Interval', BLUE)
         group_nodes_description = VGroup(text_nodes_representation).arrange(DOWN, center=False, aligned_edge=RIGHT)
         text_head_tail = Tex(r"$\vartriangleright$ Head-tail structure").scale(text_scale)
-        text_group = VGroup(text_interval, text_cplex, group_nodes_description, text_head_tail).arrange(DOWN,
-                                                                                                        center=False,
-                                                                                                        aligned_edge=LEFT).to_corner(
+        text_group_1 = VGroup(text_cplex, group_nodes_description, text_head_tail).arrange(DOWN, center=False, aligned_edge=LEFT)
+        text_group = VGroup(text_interval, text_group_1).arrange(DOWN, center=False, aligned_edge=LEFT, buff=TITLE_BUF).to_corner(
             UP + LEFT)
         coords = [
             np.array([0, 0, 0]),  # head
@@ -302,7 +305,7 @@ class SequenceOtherWork(Slide):
         circle_list = [0, 1, 4, 6, 7, 10, 11, 12, 14]
         dot_list = [i for i in range(len(coords)) if i not in circle_list]
         dots = [Dot(coords[i]) for i in circle_list]
-        circles = [Circle(radius=dots[0].radius, color=FOREGROUND).move_to(coords[i]) for i in dot_list]
+        circles = [Circle(radius=dots[0].radius, color=FG).move_to(coords[i]) for i in dot_list]
         points_list = dots + circles
         y_coord = -1
         limit_length = 2.25
@@ -339,7 +342,7 @@ class SequenceOtherWork(Slide):
         figures = VGroup(*figure_list).next_to(text_group, DOWN, buff=0.5).set_x(ORIGIN[0])
         text_pros_cons = MarkupText(
             f"<span fgcolor='{GREEN}'>OK</span> optional visits\n<span fgcolor='{RED}'>KO</span> cannot insert anywhere in the sequence").scale(
-            .5)
+            .45)
         text_pros_cons.next_to(figures, DOWN).to_corner(LEFT)
 
         self.play(FadeIn(text_group))
@@ -379,7 +382,15 @@ class Sequences(Slide):
              [r"\alpha \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(1, 4)"],
              [r"\alpha \rightarrow 5 \rightarrow 1 \rightarrow 4 \rightarrow \omega", r"Insert(\alpha, 5)"]
              ],
-            include_outer_lines=True).next_to(text_sequence, DOWN).set_x(ORIGIN[0])
+            include_outer_lines=False).next_to(text_sequence, DOWN, buff=TITLE_BUF).set_x(ORIGIN[0])
+        for i, o in enumerate(insert_table.get_horizontal_lines()):
+            if i == 0:
+                o.set_color(BLUE)
+            else:
+                insert_table.remove(o)
+
+        for i, o in enumerate(insert_table.get_vertical_lines()):
+            o.set_color(BLUE)
 
         # coordinates for the dots
         coords = [
@@ -387,7 +398,7 @@ class Sequences(Slide):
             np.array([-1.75, 2.75, 0]),
             np.array([-1.25, 1.25, 0]),
             np.array([-1, -0.5, 0]),
-            np.array([-4, -1.5, 0]),  # last member
+            np.array([-4, -1.5, 0]),  # last member (omega)
             np.array([2, 2.5, 0]),
             np.array([1.75, 1, 0]),
             np.array([3.25, -0.75, 0]),  # last possible
@@ -409,8 +420,8 @@ class Sequences(Slide):
         members_group = VGroup(*[dots[i] for i in members])
         excluded_group = VGroup(*[dots[i] for i in excluded])
         possible_group = VGroup(*[dots[i] for i in possible])
-        text_first = Tex(r"$\alpha$", color=MEMBER).next_to(dots[0], LEFT)
-        text_last = Tex(r"$\omega$", color=MEMBER).next_to(dots[4], LEFT)
+        text_first = Tex(r"$\alpha$", color=MEMBER).next_to(dots[0], LEFT, buff=0.1)
+        text_last = Tex(r"$\omega$", color=MEMBER).next_to(dots[4], LEFT, buff=0.1)
         text_member = Text("members (S)", color=MEMBER).scale(0.5)
         text_possible = Text("possible (P)", color=POSSIBLE).scale(0.5)
         text_excluded = Text("excluded (E)", color=EXCLUDED).scale(0.5)
@@ -428,7 +439,7 @@ class Sequences(Slide):
         insertions_arrows = {
             node:
                 [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4,
-                             dash_length=0.15, color=FOREGROUND) for pred in v]
+                             dash_length=0.15, color=FG) for pred in v]
             for node, v in insertions.items()
         }
         # make the arrows grow
@@ -448,9 +459,16 @@ class Sequences(Slide):
         # and the dots appear
         self.play(*[FadeIn(dot) for dot in dots])
         self.pause()
+        # simply shows the text first and last node, arrows between them and explains nothing else
+        temporary_arrow = Arrow(dots[0], dots[4], color=MEMBER)
+        self.play(AnimationGroup(*[dots[i].animate.set_color(MEMBER) for i in [0, 4]]))
+        self.play(AnimationGroup(*[FadeIn(text_first), FadeIn(text_last), GrowArrow(temporary_arrow)], lag_ratio=0.2))
+        self.pause()
+        self.play(FadeOut(temporary_arrow))
         # nodes that will be set as members
         self.play(members_group.animate.set_color(MEMBER))
-        self.play(AnimationGroup(*[FadeIn(text_first), FadeIn(text_last), FadeIn(text_member)]))
+        #self.play(AnimationGroup(*[FadeIn(text_first), FadeIn(text_last), FadeIn(text_member)]))
+        self.play(FadeIn(text_member))
         self.pause()
         self.play(AnimationGroup(*animations, lag_ratio=0.25))
         self.pause()
@@ -546,10 +564,9 @@ class Sequences(Slide):
             Tex("$\emptyset$"),
             Tex("$\emptyset$"),
             Tex("$\emptyset$"),
-            #MarkupText(f"$<span fgcolor='{BLUE}'>a, b, c</span>$"),  # TODO check for coloring
-            Tex("$\{a, b, c\}$"),
-            Tex("$\{a, b, c, d\}$"),
-            Tex("$\{b, c, d, e\}$"),
+            MathTex(r"\{ {{ \alpha }}, {{ a }} , {{ b }} , {{ c }} \}"),
+            MathTex("\{ {{ a }} , {{ b }} , {{ c }} , {{ d }} \}"),
+            MathTex("\{ {{ b }} , {{ c }} , {{ d }} , {{ e }} \}"),
             Tex("$\emptyset$"),
             Tex("$\emptyset$"),
         ]
@@ -573,6 +590,16 @@ class Sequences(Slide):
             Tex("0", color=POSSIBLE),
             Tex("0", color=POSSIBLE),
         ]
+        for c in [r'\alpha', 'a', 'b', 'c']:
+            table_insertions[3].set_color_by_tex(c, MEMBER)
+        for c in ['a', 'b', 'c']:
+            table_insertions[4].set_color_by_tex(c, MEMBER)
+        for c in ['d']:
+            table_insertions[4].set_color_by_tex(c, POSSIBLE)
+        for c in ['b', 'c']:
+            table_insertions[5].set_color_by_tex(c, MEMBER)
+        for c in ['d', 'e']:
+            table_insertions[5].set_color_by_tex(c, POSSIBLE)
 
         table_shift = np.array([8, -1, 0])
         t0 = MobjectTable([
@@ -597,7 +624,7 @@ class Sequences(Slide):
         self.wait()
         self.pause()
         # show insertions for node 6
-        surrounding_rectangle_node_6 = SurroundingRectangle(dots[6], color=POSSIBLE)
+        surrounding_rectangle_node_6 = SurroundingRectangle(dots[6])
         self.play(Create(surrounding_rectangle_node_6))
         # show member insertions
         self.play(AnimationGroup(
@@ -641,14 +668,26 @@ class Sequences(Slide):
                                    [MathTex("succ"), MathTex("b"), MathTex("c"), MathTex(r"\omega"), MathTex("d"),
                                     MathTex("e"), MathTex("f"), MathTex("g"), MathTex("h"), MathTex("a"), MathTex(r"\alpha")]
                                    ], h_buff=0.2, include_outer_lines=False).next_to(t2, DOWN)
-        #succ_array = MathTable([["node"] + [c for c in "abcdefgh"] + [r"\alpha", r"\omega"],
-        #                        ["succ", "b", "c", r"\omega", "d", "e", "f", "g", "h", "a", r"\alpha"]],
-        #                       h_buff=0.2, v_buff=0.1, include_outer_lines=False).next_to(t2, DOWN)
+        #succ_array = Table([['node', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'alpha', 'omega'],
+        #                           ], h_buff=0.2, include_outer_lines=False).next_to(t2, DOWN)
+        succ_array = MathTable([["node"] + [c for c in "abcdefgh"] + [r"\alpha", r"\omega"],
+                                ["succ", "b", "c", r"\omega", "d", "e", "f", "g", "h", "a", r"\alpha"]],
+                               h_buff=0.2, v_buff=0.1, include_outer_lines=False).next_to(t2, DOWN)
         for node in [0, 1, 2, 8, 9]:
             succ_array.add_highlighted_cell((1, node + 2), color=MEMBER)
             succ_array.add_highlighted_cell((2, node + 2), color=MEMBER)
-        self.play(Create(succ_array))
+        self.play(FadeIn(succ_array))
         self.wait()
+        self.pause()
+        # highlight differences with Charles Thomas's paper: required nodes
+        text_required = Text("Required (R)", color=REQUIRED).scale(0.5).next_to(text_member, DOWN)
+        # remove alpha and omega labels, add required label, change node 6 to required and remove npx and nsx
+        cross_npx = Cross(t2.get_columns()[2:4])
+        cross_first = Cross(text_first)
+        cross_last = Cross(text_last)
+        self.play(AnimationGroup(*[Create(cross_first), Create(cross_last), dots[6].animate.set_color(REQUIRED),
+                                   nodes_labels[6].animate.set_color(REQUIRED), FadeIn(text_required), Create(cross_npx)]))
+
         self.pause()
         self.wait()
 
@@ -708,15 +747,15 @@ class DomainConsistency(Slide):
         theta_p = MathTex(r"\Theta(|P|)")
         theta_1 = MathTex(r"\Theta(1)")
         table = MobjectTable([
-            [Tex("Operation"), Tex("Description"), Tex("Complexity")],
+            [Tex("Operation", color=BLUE), Tex("Description", color=BLUE), Tex("Complexity", color=BLUE)],
             [Tex("isBound(Sq)"), Tex("true iif $\mid P \mid = 0$"), theta_1.copy()],
             [Tex("is\{Member/Possible/Excluded\}(Sq, $x$)"), Tex("true iff $x \in \{S / P / E\}$"), theta_1.copy()],
             [Tex("get\{Member/Possible/Excluded\}(Sq, $x$)"), Tex("enumerates over $\{S / P / E\}$"),
              MathTex("\Theta(|\{S / P / E\}|)")],
-            [Tex("succ(Sq, $x$)"), Tex("gives the successor of x"), theta_1.copy()],
-            [Tex("pred(Sq, $x$)"), Tex("gives the predecessor of x"), theta_1.copy()],
-            [Tex("insert(Sq, $p$, $x$)"), Tex("inserts x after node p in Sq"), theta_p.copy()],
-            [Tex("exclude(Sq, $x$)"), Tex("excludes x from Sq"), theta_p.copy()],
+            [Tex("succ(Sq, $x$)"), Tex("gives the successor of $x$"), theta_1.copy()],
+            [Tex("pred(Sq, $x$)"), Tex("gives the predecessor of $x$"), theta_1.copy()],
+            [Tex("insert(Sq, $p$, $x$)"), Tex("inserts $x$ after node $p$ in Sq"), theta_p.copy()],
+            [Tex("exclude(Sq, $x$)"), Tex("excludes $x$ from Sq"), theta_p.copy()],
             [Tex("nMemberInserts(Sq, $x$)"), Tex("returns $n_s^x = \mid I^x \cap S \mid $"), theta_1.copy()],
             [Tex("nPossibleInserts(Sq, $x$)"), Tex("returns $n_p^x = \mid I^x \cap P \mid $"), theta_1.copy()],
             [Tex("getMemberInserts(Sq, $x$)"), Tex("enumerates over $I^x \cap S$"), MathTex("\Theta(\min(|I^x|, |S|))")],
@@ -725,10 +764,18 @@ class DomainConsistency(Slide):
             [Tex("removeInsert(Sq, $p$, $x$)"), Tex("removes $p$ from $I^x$"), MathTex("\mathcal{O}(|P|)")],
         ], v_buff=0.1, h_buff=0.2).scale(0.65).next_to(complexity, DOWN).set_x(ORIGIN[0])
 
-        table.remove(*[o for i, o in enumerate(table.get_horizontal_lines()) if i != 0])
-        notification = Text("Constraints notified by insertions, exclusion, removal of insertions") \
+        #table.remove(*[o for i, o in enumerate(table.get_horizontal_lines()) if i != 0])
+        notification = Text("Constraints notified by insertions, exclusion, removal of insertions", color=BLUE) \
             .scale(0.6).next_to(table, DOWN)
-        # keep only the first vertical line
+        # TODO color lines in the table
+        for i, o in enumerate(table.get_horizontal_lines()):
+            if i == 0:
+                o.set_color(BLUE)
+            else:
+                table.remove(o)
+
+        for i, o in enumerate(table.get_vertical_lines()):
+            o.set_color(BLUE)
         self.play(FadeIn(complexity))
         self.play(FadeIn(table))
         self.pause()
@@ -750,7 +797,7 @@ class TransitionTime(Slide):
         title = Text("Transition Time Constraint", color=BLUE)
         blist = BulletedList("Links with transition matrix, time windows, total transition time",
                              "Transitions must respect the time windows").scale(0.9)
-        layout = VGroup(title, blist).arrange(DOWN, center=False, aligned_edge=LEFT).to_corner(UP + LEFT)
+        layout = VGroup(title, blist).arrange(DOWN, center=False, aligned_edge=LEFT, buff=2*TITLE_BUF).to_corner(UP + LEFT)
         formula_1 = MathTex(r"\text{\texttt{TransitionTimes}}(Sq, [start], [duration], [[trans]], transitionTime)").scale(0.9)
         formula_2 = MathTex(r"""\left\{ 
 \overrightarrow{S} \in D(Sq) \left\vert 
@@ -762,7 +809,7 @@ class TransitionTime(Slide):
 \end{matrix} 
 \right.
 \right\}""").scale(0.65)
-        layout_formula = VGroup(formula_1, formula_2).arrange(DOWN)
+        layout_formula = VGroup(formula_1, formula_2).arrange(DOWN, buff=2*TITLE_BUF).next_to(layout, DOWN, buff=2*TITLE_BUF).set_x(ORIGIN[0])
         filtering_step_1 = MarkupText(f"<span fgcolor='{BLUE}'>1) </span>Update the time windows").scale(0.6)
         filtering_step_2 = MarkupText(f"<span fgcolor='{BLUE}'>2) </span>Remove invalid insertions").scale(0.6)
         self.play(FadeIn(title))
@@ -818,7 +865,7 @@ class TransitionTime(Slide):
         insertions_arrows = {
             node:
                 [DashedArrow(start=dots[pred].get_center(), end=dots[node].get_center(), dashed_ratio=0.4,
-                             dash_length=0.15, color=FOREGROUND) for pred in v]
+                             dash_length=0.15, color=FG) for pred in v]
             for node, v in insertions.items()
         }
         schema = VGroup(members_group, excluded_group, possible_group, *successors,
@@ -988,8 +1035,10 @@ class OtherConstraints(Slide):
         desc_disjoint = MarkupText("A node is visited by one of several Sequence ").scale(.5)
         disjoint = VGroup(text_disjoint, desc_disjoint).arrange(DOWN, center=False, aligned_edge=LEFT)
 
-        layout = VGroup(text_title, dependence, precedence, cumulative, disjoint) \
+        layout_1 = VGroup(text_title, dependence, precedence, cumulative, disjoint) \
             .arrange(DOWN, center=False, aligned_edge=LEFT, buff=.5).to_corner(UP + LEFT)
+        layout = VGroup(text_title, layout_1) \
+            .arrange(DOWN, center=False, aligned_edge=LEFT, buff=TITLE_BUF).to_corner(UP + LEFT)
         for i in [desc_dependence, desc_precedence, desc_cumulative, desc_disjoint]:
             i.shift(np.array([0.5, 0, 0]))
         self.play(FadeIn(text_title))
@@ -998,13 +1047,65 @@ class OtherConstraints(Slide):
         self.wait()
 
 
-class SearchProcedure(Slide):
+class Search(Slide):
 
     def construct(self):
         # search procedure template
-
+        search_title = Text("Search procedure", color=BLUE).to_corner(UP + LEFT)
+        myTemplate = TexTemplate(documentclass=r"\documentclass[boxed,border=2pt]{standalone}")
+        myTemplate.add_to_preamble("\\usepackage[linesnumbered, titlenumbered,noend]{algorithm2e}\n\\DontPrintSemicolon")
+        search = Tex(r"""
+        	\hsize=10.9cm
+	\setlength{\algomargin}{11pt}
+	\begin{algorithm}[H]
+		\If{isFixed(Sq)}{
+			\Return solution \;
+		}
+		$node \gets {\arg\!\min}{\; \{ nMemberInserts(Sq, node) \; | \; \forall {node \in {possible\;node}}\} }$  \;
+		$branching \gets \{  \}$ \;
+		\For{$pred \in getMemberInserts(Sq, n)$}{
+			$branching \gets branching + insert(Sq, pred, node)$ \;
+		}
+		
+		sort $branching$ by increasing order of heuristic \;
+		\Return $branching$ \;
+	\end{algorithm}""", tex_template=myTemplate, tex_environment=None)\
+            .scale(0.8)\
+            .next_to(search_title, DOWN, buff=TITLE_BUF)\
+            .set_x(ORIGIN[0])
         # LNS template
 
+        lns = Tex(r"""
+        		\hsize=10.9cm
+	\setlength{\algomargin}{11pt}
+\begin{algorithm}[H]
+	$bestSol \gets initSol $ \;
+	\For{$i \in \{ minSize \ldots  (maxSize-range) \}$}{
+		\If{i = maxSize-range}{
+			$i \gets minSize$ \;  
+		}
+		\For{$j \in \{0 \ldots range - 1\}$}{ 
+			\For{$k \in \{ 1 \ldots numIter \}$}{ 
+				relax(i + j) nodes from $bestSol$ \label{alg:lns_relax}\;
+				$sol \gets optimize(dist)$ \label{alg:lns_optimize}\;
+				\If{the solution has been improved}{
+					$bestSol \gets sol$
+				}
+				\If{timeLimit is reached} {
+					\Return $bestSol$
+				}
+			}
+		}
+	}
+\end{algorithm}""", tex_template=myTemplate, tex_environment=None)\
+            .scale(0.8)\
+            .next_to(search_title, DOWN, buff=TITLE_BUF)\
+            .set_x(ORIGIN[0])
+
+        self.play(AnimationGroup(*[FadeIn(search_title), FadeIn(search)]))
+        self.pause()
+        self.play(FadeOut(search))
+        self.play(FadeIn(lns))
         self.pause()
         self.wait()
 
@@ -1094,12 +1195,50 @@ class Problems(Slide):
         self.play(FadeIn(table_tsptw))
         self.play(FadeIn(text_results_tsptw))
         self.pause()
-        self.play(AnimationGroup(*[FadeOut(title_tsptw, table_tsptw, text_results_tsptw)]))
+        self.play(FadeOut(table_tsptw, text_results_tsptw))
+
+        ax = Axes(
+            x_range=[0, 60, 5],
+            y_range=[14900, 15800, 100],
+            x_length=9,
+            y_length=6,
+            x_axis_config={"numbers_to_include": np.arange(0, 60, 5)},
+            y_axis_config={"numbers_to_include": np.arange(14950, 15800, 100)},
+            tips=False,
+        ).scale(0.8).to_corner(DOWN)
+        labels = ax.get_axis_labels(
+            x_label=Tex("time [s]", color=BLUE), y_label=Tex("Objective", color=BLUE)
+        )
+
+        x_vals = []
+        y_vals = []
+
+        # string: "t = 6.329 cost = 15062"
+        pattern = "t = (\d+.\d+) cost = (\d+)"
+
+        with open("results_tsptw.txt") as file:
+            for line in file:
+                if (search_obj := re.search(pattern, line)) is not None:
+                    time = float(search_obj.group(1))
+                    cost = int(search_obj.group(2))
+                    x_vals.append(time)
+                    y_vals.append(cost)
+
+        graph = ax.plot_line_graph(x_values=x_vals, y_values=y_vals, add_vertex_dots=False)
+        graph_2 = ax.plot_line_graph(x_values=[-1, 61], y_values=[15031, 15031], line_color=RED, add_vertex_dots=False)
+
+        self.play(FadeIn(ax, labels))
+        self.play(Create(graph, run_time=3))
+        self.pause()
+        self.play(Create(graph_2))
+        self.pause()
+        self.play(FadeOut(graph, graph_2, ax, labels, title_tsptw))
+
 
         # darp
         #myTemplate = TexTemplate()
         #myTemplate.add_to_preamble(r"\usepackage{xcolor}")
-        text_resuts_darp = Text("Mean of 10 runs of 15 minutes, initial solution provided").scale(0.8)
+        text_resuts_darp = Text("Mean of 10 runs of 15 minutes, initial solution provided").scale(0.6)
         table_darp = MobjectTable([
             [Tex("m", color=BLUE),
              Tex("n", color=BLUE),
@@ -1118,7 +1257,7 @@ class Problems(Slide):
             [Tex("11"), Tex("120"), Tex("699.32", color=TABLE_HIGHLIGHT), Tex("718.58"), Tex("861.74")],
             [Tex("13"), Tex("144"), Tex("878.33", color=TABLE_HIGHLIGHT), Tex("901.71"), Tex("1042.82")],
         ], v_buff=0.15, h_buff=1, arrange_in_grid_config={"cell_alignment": RIGHT})\
-            .next_to(title_tsptw, DOWN, buff=TITLE_BUF).set_x(ORIGIN[0])
+            .scale(0.9).next_to(title_tsptw, DOWN, buff=TITLE_BUF).set_x(ORIGIN[0])
         text_resuts_darp.to_corner(DOWN + LEFT)
         for i, o in enumerate(table_darp.get_horizontal_lines()):
             if i == 0:
@@ -1232,19 +1371,21 @@ class Perspectives(Slide):
 class Conclusion(Slide):
 
     def construct(self):
+        #self.camera_class.set_background(np.array([255, 255, 255]))
         title = Text("Conclusion", color=BLUE).scale(1.2).to_corner(UP)
-        text_1 = MathTex(r"\bullet\hspace{5pt} \text{Sequence Variables = CP alternative to successor model}")
-        text_2 = MathTex(r"\vartriangleright \hspace{5pt} \text{Can model optional visits}").scale(.8)
-        text_3 = MathTex(r"\vartriangleright \hspace{5pt} \text{Compatible with insertions heuristics}").scale(.8)
-        text_4 = MathTex(r"\bullet\hspace{5pt} \text{Efficient for several VRP}")
-        text_5 = MathTex(r"\bullet\hspace{5pt} \text{Many possibilities for further improvements}")
+        text_1 = MathTex(r"\bullet\hspace{5pt} \text{Sequence Variables = CP alternative to successor model}", color=FG)
+        text_2 = MathTex(r"\vartriangleright \hspace{5pt} \text{Can model optional visits}", color=FG).scale(.8)
+        text_3 = MathTex(r"\vartriangleright \hspace{5pt} \text{Compatible with insertions heuristics}", color=FG).scale(.8)
+        text_4 = MathTex(r"\bullet\hspace{5pt} \text{Efficient for several VRP}", color=FG)
+        text_5 = MathTex(r"\bullet\hspace{5pt} \text{Many possibilities for further improvements}", color=FG)
         text = VGroup(text_1, text_2, text_3, text_4, text_5).arrange(DOWN, center=False, aligned_edge=LEFT, buff=0.5)\
+            .scale(0.9)\
             .to_corner(LEFT)\
             .set_y(ORIGIN[1])
         text_2.shift(np.array([0.5, 0, 0]))
         text_3.shift(np.array([0.5, 0, 0]))
-        text_bye = Text("Thanks for your attention!", color=BLUE).scale(0.9).next_to(text, DOWN)
-        text_mail = Text("augustin.delecluse@uclouvain.be").scale(0.7).to_corner(DOWN)
+        text_bye = Text("Thanks for your attention!", color=BLUE).scale(0.9).next_to(text, DOWN, buff=TITLE_BUF).set_x(ORIGIN[0])
+        text_mail = Text("augustin.delecluse@uclouvain.be", color=FG).scale(0.7).to_corner(DOWN)
         self.play(FadeIn(title))
         self.play(FadeIn(text))
         self.pause()
